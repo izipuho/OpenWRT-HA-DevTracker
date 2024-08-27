@@ -16,21 +16,21 @@ case $2 in
 esac
 
 case $3 in
-	ac:5f:ea:75:77:52)
-		device=eugene_phone
+	18:fa:b7:3a:f6:21)
+		device=IZipuho-iPhone
 	;;
-	8c:98:6b:00:01:61)
-		device=alla_phone
+	98:50:2e:9b:97:05)
+		device=IZipuho-iPhoneBig
 	;;
 esac
 
 logger -t hostapd_action $device $action
 
-token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlODI1YjBhMzNmMmY0OTY0OTZiZTE0OTRmM2IyNDZhZSIsImlhdCI6MTcyNDU0ODM1MiwiZXhwIjoyMDM5OTA4MzUyfQ.BTrc-8B1mG9Wh4bnAOFdHdsf2WXKq3VD2rB7ck0_Se8'
+token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlODNjZWE3YmEyMWM0NjA0YmNlNGFjODRkYzcxN2M4ZCIsImlhdCI6MTcyNDc1MDU2MCwiZXhwIjoyMDQwMTEwNTYwfQ.fnSkQk60RK9PSOAeIBU-8uJ3rGfydC-BfEZZxtnaS5M'
 hostname="$(cat /proc/sys/kernel/hostname)"
-room=${hostname#ap-}
+room=${hostname}
 entity_id="device_tracker.${device}_${room}"
-url="https://ha.boo.outerface.net/api/states/$entity_id"
+url="http://10.8.25.110:8123/api/states/$entity_id"
 data=$(cat <<-END
 {
 "entity_id": "$entity_id",
@@ -42,5 +42,5 @@ data=$(cat <<-END
 END
 )
 
-[[ -n $action && -n $device ]] && curl --silent --output /dev/null --user sergio --oauth2-bearer "$token" --json "$data" "$url"
+[[ -n $action && -n $device ]] && curl --silent --output /dev/null --user zip --oauth2-bearer "$token" --json "$data" "$url"
 
