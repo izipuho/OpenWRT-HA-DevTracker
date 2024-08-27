@@ -5,7 +5,7 @@ USE_PROCD=1
 START=31
 STOP=20
 
-IFACE=boo
+IFACE=uni-study-ax
 ACTION=/etc/hostapd-action
 
 start_service() {

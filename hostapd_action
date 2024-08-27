@@ -16,10 +16,10 @@ case $2 in
 esac
 
 case $3 in
-	18:fa:b7:3a:f6:21)
+	1a:1d:22:36:00:7c)
 		device=IZipuho-iPhone
 	;;
-	98:50:2e:9b:97:05)
+	aa:f4:bf:68:17:b4)
 		device=IZipuho-iPhoneBig
 	;;
 esac
