@@ -1,0 +1,43 @@
+#!/bin/sh
+case $2 in
+	AP-STA-CONNECTED)
+		action=connected
+		state=home
+	;;
+	AP-STA-DISCONNECTED)
+		action=disconnected
+		state=not_home
+	;;
+esac
+
+case $3 in
+	ac:5f:ea:75:77:52)
+		device=eugene-phone
+	;;
+	8c:98:6b:00:01:61)
+		device=alla-phone
+	;;
+esac
+
+logger -t hostapd_action $device $action
+
+token=''
+room='hall'
+
+entity_id="device_tracker.${device}_${room}"
+
+data=$(cat <<-END
+{
+"entity_id": "$entity_id",
+"state": "$state",
+"attributes": {
+  "source_type": "router",
+  "mac_address": "$3",
+}}
+END
+)
+
+url="https://ha.boo.outerface.net/api/states/$entity_id"
+
+[[ -n $action && -n $device ]] && curl --user sergio --oauth2-bearer "$token" --json "$data" "$url"
+

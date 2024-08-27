@@ -1,0 +1,19 @@
+#!/bin/sh /etc/rc.common
+#
+
+USE_PROCD=1
+START=31
+STOP=20
+
+IFACE=boo
+ACTION=/etc/hostapd-action
+
+start_service() {
+	echo start
+	hostapd_cli -i $IFACE -a $ACTION -r -B -P /var/run/hostapd_cli_$IFACE.pid
+}
+
+stop_service() {
+	killall hostapd_cli
+}
+
