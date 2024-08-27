@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# 1: interface
+# 2: action
+# 3: mac
+
 case $2 in
 	AP-STA-CONNECTED)
 		action=connected
@@ -12,32 +17,30 @@ esac
 
 case $3 in
 	ac:5f:ea:75:77:52)
-		device=eugene-phone
+		device=eugene_phone
 	;;
 	8c:98:6b:00:01:61)
-		device=alla-phone
+		device=alla_phone
 	;;
 esac
 
 logger -t hostapd_action $device $action
 
-token=''
-room='hall'
-
+token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlODI1YjBhMzNmMmY0OTY0OTZiZTE0OTRmM2IyNDZhZSIsImlhdCI6MTcyNDU0ODM1MiwiZXhwIjoyMDM5OTA4MzUyfQ.BTrc-8B1mG9Wh4bnAOFdHdsf2WXKq3VD2rB7ck0_Se8'
+hostname="$(cat /proc/sys/kernel/hostname)"
+room=${hostname#ap-}
 entity_id="device_tracker.${device}_${room}"
-
+url="https://ha.boo.outerface.net/api/states/$entity_id"
 data=$(cat <<-END
 {
 "entity_id": "$entity_id",
 "state": "$state",
 "attributes": {
   "source_type": "router",
-  "mac_address": "$3",
+  "mac_address": "$3"
 }}
 END
 )
 
-url="https://ha.boo.outerface.net/api/states/$entity_id"
-
-[[ -n $action && -n $device ]] && curl --user sergio --oauth2-bearer "$token" --json "$data" "$url"
+[[ -n $action && -n $device ]] && curl --silent --output /dev/null --user sergio --oauth2-bearer "$token" --json "$data" "$url"
 
