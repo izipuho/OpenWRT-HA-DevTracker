@@ -1,5 +1,5 @@
 #!/bin/sh
-source /etc/config/hostapd_action.conf
+source /etc/config/hostapd_action
 
 # 1: interface
 # 2: action

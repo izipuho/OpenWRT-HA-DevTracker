@@ -1,2 +1,3 @@
 
 *.swp
+config/hostapd_action.*
