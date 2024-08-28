@@ -6,7 +6,7 @@ START=31
 STOP=20
 
 IFACE=uni-study-ax
-ACTION=/etc/hostapd-action
+ACTION=/etc/hostapd_action
 
 start_service() {
 	echo start

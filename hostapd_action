@@ -16,11 +16,14 @@ case $2 in
 esac
 
 case $3 in
-	1a:1d:22:36:00:7c)
+	de:dd:5d:e7:24:0b)
 		device=IZipuho-iPhone
 	;;
 	aa:f4:bf:68:17:b4)
 		device=IZipuho-iPhoneBig
+	;;
+	4e:7b:74:e5:7d:f7)
+		device=Nika-iPhone
 	;;
 esac
 
@@ -28,8 +31,8 @@ logger -t hostapd_action $device $action
 
 token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlODNjZWE3YmEyMWM0NjA0YmNlNGFjODRkYzcxN2M4ZCIsImlhdCI6MTcyNDc1MDU2MCwiZXhwIjoyMDQwMTEwNTYwfQ.fnSkQk60RK9PSOAeIBU-8uJ3rGfydC-BfEZZxtnaS5M'
 hostname="$(cat /proc/sys/kernel/hostname)"
-room=${hostname}
-entity_id="device_tracker.${device}_${room}"
+room=${hostname#IZSky-UniFi-}
+entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
 url="http://10.8.25.110:8123/api/states/$entity_id"
 data=$(cat <<-END
 {
@@ -41,6 +44,8 @@ data=$(cat <<-END
 }}
 END
 )
+
+logger -t hostapd_action $device $data
 
 [[ -n $action && -n $device ]] && curl --silent --output /dev/null --user zip --oauth2-bearer "$token" --json "$data" "$url"
 
