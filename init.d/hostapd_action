@@ -13,6 +13,6 @@ start_service() {
 }
 
 stop_service() {
-	killall hostapd_cli
+	killall -9 hostapd_cli
 }
 

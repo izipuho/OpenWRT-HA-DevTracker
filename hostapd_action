@@ -37,7 +37,7 @@ token=$token
 hostname="$(cat /proc/sys/kernel/hostname)"
 room=${hostname#$host_prefix}
 entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
-url="http://10.8.25.110:8123/api/states/$entity_id"
+url="$HA/api/states/$entity_id"
 data=$(cat <<-END
 {
 "entity_id": "$entity_id",
