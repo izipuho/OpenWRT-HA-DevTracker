@@ -1,4 +1,8 @@
-token=""
-HA=""
-host_prefix=""
-IFACE=""
+config hostapd_action ha
+	option token ''
+	option url ''
+
+config hostapd_action network
+	option host_prefix ''
+	option IFACE ''
+

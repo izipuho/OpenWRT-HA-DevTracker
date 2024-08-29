@@ -1,9 +1,11 @@
 #!/bin/sh
-source /etc/config/hostapd_action
+. /lib/functions.sh
+config_load hostapd_action
 
 # 1: interface
 # 2: action
 # 3: mac
+
 
 case $2 in
 	AP-STA-CONNECTED)
@@ -17,7 +19,7 @@ case $2 in
 esac
 
 case $3 in
-	de:dd:5d:e7:24:0b)
+	18:fa:b7:3a:f6:21)
 		device=IZipuho-iPhone
 		user=zip
 	;;
@@ -33,10 +35,13 @@ esac
 
 logger -t hostapd_action $device $action
 
-token=$token
+#token=$token
+config_get token ha token
 hostname="$(cat /proc/sys/kernel/hostname)"
+config_get host_prefix network host_prefix
 room=${hostname#$host_prefix}
 entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
+config_get HA ha url
 url="$HA/api/states/$entity_id"
 data=$(cat <<-END
 {
