@@ -6,3 +6,6 @@ config hostapd_action network
 	option host_prefix ''
 	option IFACE ''
 
+#config device ''
+#	option mac ''
+#	optoin user ''

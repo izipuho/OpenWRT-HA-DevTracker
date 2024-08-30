@@ -1,11 +1,24 @@
 #!/bin/sh
-. /lib/functions.sh
-config_load hostapd_action
 
 # 1: interface
 # 2: action
 # 3: mac
 
+. /lib/functions.sh
+device_file=$(mktemp -t hostapd_action_device-XXXXXX)
+
+handle_device() {
+	local type="$1"
+	local in_mac="$2"
+	config_get mac $type mac
+	config_get user $type user
+	if [ "$mac" == "$in_mac" ]
+	then
+		echo "device=$type; user=$user" >> "$device_file"
+	fi
+}
+
+config_load hostapd_action
 
 case $2 in
 	AP-STA-CONNECTED)
@@ -18,24 +31,10 @@ case $2 in
 	;;
 esac
 
-case $3 in
-	18:fa:b7:3a:f6:21)
-		device=IZipuho-iPhone
-		user=zip
-	;;
-	aa:f4:bf:68:17:b4)
-		device=IZipuho-iPhoneBig
-		user=zip
-	;;
-	4e:7b:74:e5:7d:f7)
-		device=Nika-iPhone
-		user=nika
-	;;
-esac
-
+config_foreach handle_device device $3
+. "$device_file"
 logger -t hostapd_action $device $action
 
-#token=$token
 config_get token ha token
 hostname="$(cat /proc/sys/kernel/hostname)"
 config_get host_prefix network host_prefix
@@ -59,3 +58,4 @@ logger -t hostapd_action $device $data
 
 [[ -n $action && -n $device ]] && curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
 
+rm "$device_file"
