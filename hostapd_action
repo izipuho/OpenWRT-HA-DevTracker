@@ -33,29 +33,35 @@ esac
 
 config_foreach handle_device device $3
 . "$device_file"
-logger -t hostapd_action $device $action
 
-config_get token ha token
-hostname="$(cat /proc/sys/kernel/hostname)"
-config_get host_prefix network host_prefix
-room=${hostname#$host_prefix}
-entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
-config_get HA ha url
-url="$HA/api/states/$entity_id"
-data=$(cat <<-END
-{
-"entity_id": "$entity_id",
-"state": "$state",
-"attributes": {
-  "source_type": "router",
-  "mac_address": "$3",
-  "user": "$user"
-}}
-END
-)
+if [ $device ] 
+then {
+	logger -t hostapd_action $device $action
 
-logger -t hostapd_action $device $data
+	config_get token ha token
+	hostname="$(cat /proc/sys/kernel/hostname)"
+	config_get host_prefix network host_prefix
+	room=${hostname#$host_prefix}
+	entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
+	config_get HA ha url
+	url="$HA/api/states/$entity_id"
+	data=$(cat <<-END
+	{
+	"entity_id": "$entity_id",
+	"state": "$state",
+	"attributes": {
+	  "source_type": "router",
+	  "mac_address": "$3",
+	  "user": "$user",
+	  "friendly_name": "${device}@${room}"
+	}}
+	END
+	)
 
-[[ -n $action && -n $device ]] && curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
+	logger -t hostapd_action $device $data
+
+	[[ -n $action && -n $device ]] && curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
+}
+fi
 
 rm "$device_file"
