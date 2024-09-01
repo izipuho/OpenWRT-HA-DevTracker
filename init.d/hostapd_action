@@ -10,10 +10,10 @@ PIDFILE=/var/run/hostapd_cli_$IFACE.pid
 ACTION=/etc/hostapd_action
 
 start_service() {
-	if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
-		echo 'Service already running'
-		return 1
-	fi
+#	if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
+#		echo 'Service already running'
+#		return 1
+#	fi
 	echo starting
 	hostapd_cli -i $IFACE -a $ACTION -r -B -P $PIDFILE
 	echo started
