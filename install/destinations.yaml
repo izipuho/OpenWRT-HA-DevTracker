@@ -1,0 +1,26 @@
+- oasis:
+  - 10.8.26.1
+    iface: hap-ac
+  - 10.8.26.10
+    iface: cap1-ac
+  - 10.8.26.11
+    iface: cap2-ac
+  - 10.8.26.12
+    iface: wap-ac
+- izsky:
+  - 10.8.25.3
+    iface: uni-hall-ax
+  - 10.8.25.4
+    iface: uni-study-ax
+  - 10.8.25.1
+    iface: turris-ax
+- lory:
+  - 10.8.27.1
+    iface: hap-ac
+  - 10.8.27.2
+    iface: cap-ac
+- nika:
+  - 10.8.28.1
+    iface: red-n
+  - 10.8.28.2
+    iface: uni-n
