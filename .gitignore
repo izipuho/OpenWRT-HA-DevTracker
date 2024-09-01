@@ -1,4 +1,5 @@
 
 *.swp
 config/hostapd_action.*
-install
+install/test*
+install/destinations.*
