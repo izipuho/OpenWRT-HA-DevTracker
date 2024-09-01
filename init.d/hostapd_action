@@ -4,16 +4,24 @@ config_load hostapd_action
 USE_PROCD=1
 START=31
 STOP=20
+config_get IFACE network IFACE
+PIDFILE=/var/run/hostapd_cli_$IFACE.pid
 
 ACTION=/etc/hostapd_action
 
 start_service() {
-	echo start
-	config_get IFACE network IFACE
-	hostapd_cli -i $IFACE -a $ACTION -r -B -P /var/run/hostapd_cli_$IFACE.pid
+	if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
+		echo 'Service already running'
+		return 1
+	fi
+	echo starting
+	hostapd_cli -i $IFACE -a $ACTION -r -B -P $PIDFILE
+	echo started
 }
 
 stop_service() {
-	killall -9 hostapd_cli
+	echo stop
+	killall -15 $(cat "$PIDFILE") $$ rm -f "$PIDFILE"
+	echo stoped
 }
 
