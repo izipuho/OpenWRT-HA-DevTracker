@@ -15,12 +15,12 @@ while IFS= read -r place; do
 		scp -O ../init.d/hostapd_action $ip:/etc/init.d/
 		ssh $ip "chmod +x /etc/init.d/hostapd_action"
 	 	scp -O ../config/hostapd_action.$name $ip:/etc/config/hostapd_action
-		ssh $ip "sed -i 's/%IFACE%/$iface/g' /etc/config/hostapd_action"
+		ssh $ip "uci add_list hostapd_action.network.IFACE=$iface"
+		ssh $ip "uci commit hostapd_action"
 		ssh $ip "killall -9 hostapd_cli"
 		ssh $ip "/etc/init.d/hostapd_action enable"
 		ssh $ip "/etc/init.d/hostapd_action start"
-		scp -O testfile $ip:/tmp/
-		ssh $ip "rm /tmp/testfile"
+
 		echo " "
 	done
 	unset IFS
