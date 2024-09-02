@@ -7,21 +7,20 @@ while IFS= read -r place; do
 	IFS=":" read -r name ips <<< "$place"
 	echo "Processing $name"
 
-	if [ $name == $1 ] || [ -z $1 ]
+	if [[ $name == $1 ]] || [[ -z $1 ]]
 	then
 		for host in $ips; do
-			IFS="@" read -r ip iface <<< "$host"
+			IFS="@" read -r ip <<< "$host"
 			echo ">$ip"
 			scp -O ../hostapd_action $ip:/etc/
-			ssh $ip "chmod +x /etc/hostapd_action" < /dev/null
+			ssh -n $ip "chmod +x /etc/hostapd_action"
 			scp -O ../init.d/hostapd_action $ip:/etc/init.d/
-			ssh $ip "chmod +x /etc/init.d/hostapd_action" < /dev/null
+			ssh -n $ip "chmod +x /etc/init.d/hostapd_action"
 			scp -O ../config/hostapd_action.$name $ip:/etc/config/hostapd_action
-			ssh $ip "uci add_list hostapd_action.network.IFACE=$iface" < /dev/null
-			ssh $ip "uci commit hostapd_action" < /dev/null
-			ssh $ip "killall -9 hostapd_cli" < /dev/null
-			ssh $ip "/etc/init.d/hostapd_action enable" < /dev/null
-			ssh $ip "/etc/init.d/hostapd_action start" < /dev/null
+			#ssh -n $ip "/etc/init.d/hostapd_action stop"
+			ssh -n $ip "killall -9 hostapd_cli"
+			ssh -n $ip "/etc/init.d/hostapd_action enable"
+			ssh -n $ip "/etc/init.d/hostapd_action start"
 
 			echo " "
 		done

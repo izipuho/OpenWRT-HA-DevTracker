@@ -1,4 +1,4 @@
-izsky:10.8.25.3@hall-main-ax 10.8.25.4@study-main-ax 10.8.25.1@turris-main-ax
-oasis:10.8.26.1@hap-main-ac 10.8.26.10@cap1-main-ac 10.8.26.11@cap2-main-n 10.8.26.12@wap-main-n
-lory:10.8.27.1@hap-main-ac 10.8.27.2@cap-main-ac
-nika:10.8.28.1@red-main-n 10.8.28.2@uni-main-n
+izsky:10.8.25.3 10.8.25.4 10.8.25.1
+oasis:10.8.26.1 10.8.26.10 10.8.26.11 10.8.26.12
+lory:10.8.27.1 10.8.27.2
+nika:10.8.28.1 10.8.28.2
