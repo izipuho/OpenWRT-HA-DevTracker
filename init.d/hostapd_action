@@ -12,6 +12,7 @@ start_service() {
 #		echo 'Service already running'
 #		return 1
 #	fi
+	uci delete hostapd_action.network.iface
 	echo starting
 	IFS=$'\n'
 	for iface in $(hostapd_cli interface | tail -n +3)
@@ -20,8 +21,10 @@ start_service() {
 		if [[ $iface == *'-main-'* ]]
 		then
 			hostapd_cli -i $iface -a $ACTION -r -B -P $PIDFILE
+			uci add_list hostapd_action.network.iface=$iface
 		fi
 	done
+	uci commit hostapd_action
 	unset IFS
 	echo started
 }
