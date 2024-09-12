@@ -3,6 +3,27 @@
 # 1: interface
 # 2: action
 # 3: mac
+# 4: init
+
+case $2 in
+	AP-STA-CONNECTED)
+		action=connected
+		state=home
+	;;
+	online)
+		action=is online
+		state=home
+	;;
+	AP-STA-DISCONNECTED)
+		action=disconnected
+		state=not_home
+	;;
+	offline)
+		action=is offline
+		state=not_home
+	;;
+esac
+
 
 . /lib/functions.sh
 device_file=$(mktemp -t hostapd_action_device-XXXXXX)
@@ -20,21 +41,10 @@ handle_device() {
 
 config_load hostapd_action
 
-case $2 in
-	AP-STA-CONNECTED)
-		action=connected
-		state=home
-	;;
-	AP-STA-DISCONNECTED)
-		action=disconnected
-		state=not_home
-	;;
-esac
-
 config_foreach handle_device device $3
 . "$device_file"
 
-if [ $device ] 
+if [[ -n $device && -n $action ]] 
 then {
 	logger -t hostapd_action $device $action
 
@@ -60,7 +70,7 @@ then {
 
 	logger -t hostapd_action $device $data
 
-	[[ -n $action && -n $device ]] && curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
+	curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
 }
 fi
 
