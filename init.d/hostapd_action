@@ -7,6 +7,22 @@ STOP=20
 
 ACTION=/etc/hostapd_action
 
+get_device_iface() {
+	config_get mac $1 mac
+	uci set hostapd_action.$1.iface=none
+	if [[ `hostapd_cli -i $2 sta $mac | head -n 1` != FAIL ]]
+	then
+		uci set hostapd_action.$1.iface=$2
+	fi
+}
+
+set_device_init_presence(){
+	config_get iface $1 iface
+	config_get mac $1 mac
+	[[ $iface != none ]] && state=online || state=offline
+	/etc/hostapd_action $iface $state $mac
+}
+
 start_service() {
 #	if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
 #		echo 'Service already running'
@@ -22,9 +38,12 @@ start_service() {
 		then
 			hostapd_cli -i $iface -a $ACTION -r -B -P $PIDFILE
 			uci add_list hostapd_action.network.iface=$iface
+
+			config_foreach get_device_iface device $iface
 		fi
 	done
 	uci commit hostapd_action
+	config_foreach set_device_init_presence device
 	unset IFS
 	echo started
 }
