@@ -7,7 +7,7 @@ STOP=20
 
 ACTION=/etc/hostapd_action
 
-get_device_iface() {
+set_device_iface() {
 	config_get mac $1 mac
 	uci set hostapd_action.$1.iface=none
 	if [[ `hostapd_cli -i $2 sta $mac | head -n 1` != FAIL ]]
@@ -39,7 +39,7 @@ start_service() {
 			hostapd_cli -i $iface -a $ACTION -r -B -P $PIDFILE
 			uci add_list hostapd_action.network.iface=$iface
 
-			config_foreach get_device_iface device $iface
+			config_foreach set_device_iface device $iface
 		fi
 	done
 	uci commit hostapd_action

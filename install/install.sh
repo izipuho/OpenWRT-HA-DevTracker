@@ -1,6 +1,4 @@
 #!/bin/bash
-#set -x
-#set -e -o pipefail 
 
 while IFS= read -r place; do
 	echo $place
@@ -12,15 +10,15 @@ while IFS= read -r place; do
 		for host in $ips; do
 			IFS="@" read -r ip <<< "$host"
 			echo ">$ip"
-			scp -O ../hostapd_action $ip:/etc/
-			ssh -n $ip "chmod +x /etc/hostapd_action"
-			scp -O ../init.d/hostapd_action $ip:/etc/init.d/
-			ssh -n $ip "chmod +x /etc/init.d/hostapd_action"
+			scp -O ../hostapd_action $ip:/etc/ && ssh -n $ip "chmod +x /etc/hostapd_action"
+			scp -O ../init.d/hostapd_action $ip:/etc/init.d/ && ssh -n $ip "chmod +x /etc/init.d/hostapd_action"
 			scp -O ../config/hostapd_action.$name $ip:/etc/config/hostapd_action
 			#ssh -n $ip "/etc/init.d/hostapd_action stop"
 			ssh -n $ip "killall -9 hostapd_cli"
 			ssh -n $ip "/etc/init.d/hostapd_action enable"
 			ssh -n $ip "/etc/init.d/hostapd_action start"
+
+			scp -O ../test.sh $ip:/tmp/ && 	ssh -n $ip "chmod +x /tmp/test.sh && sh /tmp/test.sh"
 
 			echo " "
 		done
