@@ -18,7 +18,7 @@ while IFS= read -r place; do
 			ssh -n $ip "/etc/init.d/hostapd_action enable"
 			ssh -n $ip "/etc/init.d/hostapd_action start"
 
-			scp -O ../test.sh $ip:/tmp/ && 	ssh -n $ip "chmod +x /tmp/test.sh && sh /tmp/test.sh"
+			#scp -O ../test.sh $ip:/tmp/ && 	ssh -n $ip "chmod +x /tmp/test.sh && sh /tmp/test.sh"
 
 			echo " "
 		done
