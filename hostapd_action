@@ -5,17 +5,25 @@
 # 3: mac
 
 case "$2" in
-        AP-STA-CONNECTED)
-                action=connected
-                state=home
-        ;;
-        AP-STA-DISCONNECTED)
-                action=disconnected
-                state=not_home
-        ;;
-        *)
-                exit 0
-        ;;
+  AP-STA-CONNECTED)
+    action=connected
+    state=home
+  ;;
+  AP-STA-DISCONNECTED)
+    action=disconnected
+    state=not_home
+  ;;
+  online)
+    action=init_online
+    state=home
+  ;;
+  offline)
+    action=init_offline
+    state=not_home
+  ;;
+  *)
+    exit 0
+  ;;
 esac
 
 . /lib/functions.sh
