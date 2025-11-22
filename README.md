@@ -8,7 +8,7 @@
 - Real-time presence updates (no polling)
 - Runs on OpenWrt using `hostapd_cli -a`
 - UCI configuration (`/etc/config/hostapd_action`)
-- Simple fleet installer (`installer/install.sh`) to deploy to many routers
+- Simple fleet installer (`install/install.sh`) to deploy to many routers
 - Updates HA via **REST**: `POST /api/states/<entity_id>` (with `Authorization: Bearer <token>`)
 
 ## Requirements
@@ -150,7 +150,3 @@ curl -i -H "Authorization: Bearer <TOKEN>" http://ha.local:8123/api/
 - Prefer an internal HA URL; use HTTPS if crossing networks.
 - Do not commit tokens to the repo (keep them only on devices).
 - Use a dedicated technical user/token with minimum required permissions.
-
-## License
-
-Add your license (e.g., MIT) in `LICENSE`.
