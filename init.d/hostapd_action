@@ -1,127 +1,87 @@
 #!/bin/sh /etc/rc.common
-# OpenWrt init script for hostapd action hook
-# Procd-managed, per-interface instances (no manual PIDs)
+config_load hostapd_action
 
+USE_PROCD=1
 START=31
 STOP=20
-USE_PROCD=1
 
-# --- Config ---
-ACTION="/etc/hostapd_action"     # path to the action script
-CONF_NS="hostapd_action"         # UCI config name
-TAG="hostapd_action"             # syslog tag
+ACTION=/etc/hostapd_action
 
-# --- Libs ---
-. /lib/functions.sh
-
-log() { logger -t "$TAG" "$@"; }
-
-# Globals populated from UCI
-INCLUDE_REGEX=""
-EXCLUDE_REGEX=""
-IFACES=""
-
-_append_iface() {
-    # called by config_list_foreach network IFACE _append_iface
-    local v="$1"
-    [ -n "$v" ] && IFACES="$IFACES $v"
-}
-
-_load_config() {
-    config_load "$CONF_NS"
-
-    # Read network section
-    config_get INCLUDE_REGEX network include ""
-    config_get EXCLUDE_REGEX network exclude ""
-
-    # list IFACE entries (optional)
-    IFACES=""
-    config_list_foreach network IFACE _append_iface
-}
-
-_discover_ifaces() {
-    # Fallback discovery when no IFACE is provided in UCI
-    # hostapd_cli interface prints:
-    # "Available interfaces:"
-    # wlan0
-    # wlan1
-    hostapd_cli interface 2>/dev/null | awk 'NR>1 && $1!="" {print $1}'
-}
-
-_filter_ifaces() {
-    # Apply include/exclude regex if provided
-    local out=""
-    for i in $1; do
-        [ -n "$INCLUDE_REGEX" ] && echo "$i" | grep -E -q "$INCLUDE_REGEX" || [ -z "$INCLUDE_REGEX" ] || continue
-        [ -n "$EXCLUDE_REGEX" ] && echo "$i" | grep -E -q "$EXCLUDE_REGEX" && continue
-        out="$out $i"
-    done
-    echo "$out"
-}
-
-_validate_runtime() {
-    command -v hostapd_cli >/dev/null 2>&1 || {
-        log "ERROR: hostapd_cli not found"
-        return 1
-    }
-    [ -x "$ACTION" ] || {
-        log "ERROR: action script missing or not executable: $ACTION"
-        return 1
-    }
-    return 0
+set_device_init_presence(){
+        config_get iface "$1" iface
+        config_get mac "$1" mac
+        if [ "$iface" != "none" ]
+        then
+                state=online
+        else
+                state=offline
+        fi
+        /etc/hostapd_action $iface $state $mac
 }
 
 start_service() {
-    _load_config
+#	if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
+#		echo 'Service already running'
+#		return 1
+#	fi
+	
+        phones=$(uci show hostapd_action | grep =device | awk -F"." '{print $2}' | awk -F"=" '{print $1}')
 
-    # Build interface list: UCI IFACE list or discovery fallback
-    local ifs="$IFACES"
-    if [ -z "$ifs" ]; then
-        ifs="$(_discover_ifaces)"
-        [ -z "$ifs" ] && { log "WARNING: no interfaces discovered via hostapd_cli"; }
-    fi
+	uci delete hostapd_action.network.iface
+	echo starting
+        IFS=$'\n'
+        for iface in $(hostapd_cli interface | tail -n +3)
+        do
+                echo " $iface"
+                PIDFILE=/var/run/hostapd_action_$iface.pid
+                case "$iface" in
+                        *-main-*)
+                                hostapd_cli -i $iface -a $ACTION -r -B -P $PIDFILE
+                                uci add_list hostapd_action.network.iface=$iface
 
-    # Apply include/exclude filters
-    ifs="$(_filter_ifaces "$ifs")"
-
-    _validate_runtime || return 1
-
-    # Start one procd instance per interface, foreground (no -B)
-    # procd supervises the process; hostapd_cli will reconnect (-r)
-    local started=0
-    for iface in $ifs; do
-        [ -n "$iface" ] || continue
-        procd_open_instance "ha_${iface}"
-        procd_set_param command hostapd_cli -a "$ACTION" -r -i "$iface"
-        procd_set_param respawn 5 60 0   # (threshold, timeout, retry) - reconnect/manage crashes
-        procd_set_param stdout 1
-        procd_set_param stderr 1
-        procd_close_instance
-        started=1
-        log "Started action hook on interface: $iface"
-    done
-
-    if [ "$started" -ne 1 ]; then
-        log "WARNING: nothing started (no matching interfaces). Check UCI list IFACE or adjust include/exclude."
-    fi
+                                for phone in $phones; do
+                                        echo "  $phone"
+                                        config_get mac "$phone" mac
+                                        #echo "  $mac"
+                                        uci set hostapd_action.$phone.iface=none
+                                        #echo $(hostapd_cli -i $iface sta $mac)
+                                        if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
+                                        then
+                                                echo "   true"
+                                                uci set hostapd_action.$phone.iface=$iface
+                                        fi
+                                done
+                        ;;
+                esac
+        done
+        for phone in $phones; do
+                config_get iface "$phone" iface
+                config_get mac "$phone" mac
+                if [ "$iface" != "none" ]
+                then
+                        state=online
+                else
+                        state=offline
+                fi
+                /etc/hostapd_action $iface $state $mac
+        done
+	uci commit hostapd_action
+	#uci foreach hostapd_action device set_device_init_presence
+	unset IFS
+	echo started
 }
 
 stop_service() {
-    # procd will terminate managed instances automatically
-    log "Stopping all hostapd action instances"
-}
-
-reload_service() {
-    # simple reload = restart with fresh config
-    log "Reloading service (restart)"
-    stop
-    start
-}
-
-service_triggers() {
-    # Reload on UCI config changes to this namespace
-    procd_add_reload_trigger "$CONF_NS"
-    # Also restart when hostapd restarts (optional, if available on your build)
-    # procd_add_raw_trigger "config.change" 0 "/etc/init.d/hostapd" "restart"
+	echo stop
+	for pidfile in /var/run/hostapd_action_*.pid; do
+		[ -f "$pidfile" ] || continue
+		pid=$(cat "$pidfile")
+		if kill -0 "$pid" 2>/dev/null; then
+			kill "$pid"
+			wait "$pid" 2>/dev/null
+		fi
+		rm -f "$pidfile"
+	done
+	echo stopped
 }
 

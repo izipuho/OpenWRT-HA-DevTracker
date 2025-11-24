@@ -33,13 +33,11 @@ hostapd_action              # action hook (gets copied to /etc/hostapd_action)
 init.d/
   └─ hostapd_action         # init.d service (to /etc/init.d/hostapd_action)
 config/
-  ├─ hostapd_action.izsky   # UCI configs per site
-  ├─ hostapd_action.oasis
-  ├─ hostapd_action.lory
-  └─ hostapd_action.nika
-installer/
+  ├─ hostapd_action.site1   # UCI configs per site
+  └─ hostapd_action.site2
+install/
   ├─ install.sh             # rollout to groups → IPs
-  └─ destinations           # group → list of IP addresses
+  └─ destinations           # site → list of IP addresses
 ```
 
 ## Installation & rollout
@@ -64,15 +62,11 @@ config hostapd_action 'network'
 #     option user 'ivan'                  # any attributes you use in entity_id
 ```
 
-> Note: in one sample there was a typo `optoin user` — it must be `option user`.
-
-2) Fill `installer/destinations` with your target groups/IPs:
+2) Fill `install/destinations` with your target groups/IPs:
 
 ```
-izsky:10.8.25.3 10.8.25.4 10.8.25.1 10.8.25.5
-oasis:10.8.26.1 10.8.26.10 10.8.26.11 10.8.26.12
-lory:10.8.27.1 10.8.27.2
-nika:10.8.28.1 10.8.28.2
+site1:10.8.25.3 10.8.25.4 10.8.25.1 10.8.25.5
+site2:10.8.26.1 10.8.26.10 10.8.26.11 10.8.26.12
 ```
 
 3) Run the **installer**:
@@ -144,13 +138,3 @@ curl -i -H "Authorization: Bearer <TOKEN>" http://ha.local:8123/api/
 - **Invalid/expired token** → create a new Long-Lived Token.
 - **No events** → ensure `hostapd_cli interface` shows your `wlan*`, service is running, and PID files are created.
 - **Wrong `entity_id`** → review your mapping/normalization (lowercase, replace invalid chars with `_`).
-
-## Security
-
-- Prefer an internal HA URL; use HTTPS if crossing networks.
-- Do not commit tokens to the repo (keep them only on devices).
-- Use a dedicated technical user/token with minimum required permissions.
-
-## License
-
-Add your license (e.g., MIT) in `LICENSE`.

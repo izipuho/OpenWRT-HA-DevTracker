@@ -4,68 +4,74 @@
 # 2: action
 # 3: mac
 
-if [[ $2 == AP-STA-DISCONNECTED || $2 == AP-STA-CONNECTED ]]
+case "$2" in
+  AP-STA-CONNECTED)
+    action=connected
+    state=home
+  ;;
+  AP-STA-DISCONNECTED)
+    action=disconnected
+    state=not_home
+  ;;
+  online)
+    action=init_online
+    state=home
+  ;;
+  offline)
+    action=init_offline
+    state=not_home
+  ;;
+  *)
+    exit 0
+  ;;
+esac
+
+. /lib/functions.sh
+device_file=$(mktemp -t hostapd_action_device-XXXXXX)
+
+handle_device() {
+        local type="$1"
+        local in_mac="$2"
+        config_get mac "$type" mac
+        config_get user "$type" user
+        if [ "$mac" = "$in_mac" ]
+        then
+                echo "device=$type; user=$user" >> "$device_file"
+        fi
+}
+
+config_load hostapd_action
+
+config_foreach handle_device device $3
+. "$device_file"
+
+if [ -n "$device" ] && [ -n "$action" ]
 then
-	case $2 in
-		AP-STA-CONNECTED)
-			action=connected
-			state=home
-		;;
-		AP-STA-DISCONNECTED)
-			action=disconnected
-			state=not_home
-		;;
-	esac
+        logger -t hostapd_action $device $action
 
+        config_get token ha token
+        hostname="$(cat /proc/sys/kernel/hostname)"
+        config_get host_prefix network host_prefix
+        room=${hostname#$host_prefix}
+        entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
+        config_get HA ha url
+        url="$HA/api/states/$entity_id"
+        data=$(cat <<-END
+        {
+        "entity_id": "$entity_id",
+        "state": "$state",
+        "attributes": {
+          "source_type": "router",
+          "mac_address": "$3",
+          "user": "$user",
+          "friendly_name": "${device}@${room}"
+        }}
+        END
+        )
 
-	. /lib/functions.sh
-	device_file=$(mktemp -t hostapd_action_device-XXXXXX)
+        logger -t hostapd_action $device $data
 
-	handle_device() {
-		local type="$1"
-		local in_mac="$2"
-		config_get mac $type mac
-		config_get user $type user
-		if [ "$mac" == "$in_mac" ]
-		then
-			echo "device=$type; user=$user" >> "$device_file"
-		fi
-	}
-
-	config_load hostapd_action
-
-	config_foreach handle_device device $3
-	. "$device_file"
-
-	if [[ -n $device && -n $action ]] 
-	then {
-		logger -t hostapd_action $device $action
-
-		config_get token ha token
-		hostname="$(cat /proc/sys/kernel/hostname)"
-		config_get host_prefix network host_prefix
-		room=${hostname#$host_prefix}
-		entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
-		config_get HA ha url
-		url="$HA/api/states/$entity_id"
-		data=$(cat <<-END
-		{
-		"entity_id": "$entity_id",
-		"state": "$state",
-		"attributes": {
-		  "source_type": "router",
-		  "mac_address": "$3",
-		  "user": "$user",
-		  "friendly_name": "${device}@${room}"
-		}}
-		END
-		)
-
-		logger -t hostapd_action $device $data
-
-		curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
-	}
-	fi
-
-	rm "$device_file"
+        curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
 fi
+
+rm "$device_file"
