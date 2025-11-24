@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # 1: interface
-# 2: action
-# 3: mac
+# 2: mac
+# 3: action
 
-case "$2" in
+case "$3" in
   AP-STA-CONNECTED)
     action=connected
     state=home
@@ -42,7 +42,7 @@ handle_device() {
 
 config_load hostapd_action
 
-config_foreach handle_device device $3
+config_foreach handle_device device $2
 . "$device_file"
 
 if [ -n "$device" ] && [ -n "$action" ]
@@ -56,18 +56,19 @@ then
         entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
         config_get HA ha url
         url="$HA/api/states/$entity_id"
-        data=$(cat <<-END
-        {
-        "entity_id": "$entity_id",
-        "state": "$state",
-        "attributes": {
-          "source_type": "router",
-          "mac_address": "$3",
-          "user": "$user",
-          "friendly_name": "${device}@${room}"
-        }}
-        END
-        )
+data=$(cat <<EOF
+{
+  "entity_id": "$entity_id",
+  "state": "$state",
+  "attributes": {
+    "source_type": "router",
+    "mac_address": "$2",
+    "user": "$user",
+    "friendly_name": "${device}@${room}"
+  }
+}
+EOF
+)
 
         logger -t hostapd_action $device $data
 
