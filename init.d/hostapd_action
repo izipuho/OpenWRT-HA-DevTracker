@@ -73,8 +73,15 @@ start_service() {
 
 stop_service() {
 	echo stop
-	killall -9 hostapd_cli
-	rm -f /var/run/hostapd_action_*.pid
-	echo stoped
+	for pidfile in /var/run/hostapd_action_*.pid; do
+		[ -f "$pidfile" ] || continue
+		pid=$(cat "$pidfile")
+		if kill -0 "$pid" 2>/dev/null; then
+			kill "$pid"
+			wait "$pid" 2>/dev/null
+		fi
+		rm -f "$pidfile"
+	done
+	echo stopped
 }
 
