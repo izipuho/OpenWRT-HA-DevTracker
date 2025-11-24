@@ -1,10 +1,13 @@
 #!/bin/sh
 
-# 1: interface
-# 2: mac
-# 3: action
+# raw-лог, чтобы видеть реальные аргументы
+# logger -t hostapd_action_raw "RAW: iface=$1 arg2=$2 arg3=$3 args='$*'"
 
-case "$3" in
+# 1: interface
+# 2: action
+# 3: mac
+
+case "$2" in
   AP-STA-CONNECTED)
     action=connected
     state=home
@@ -42,12 +45,13 @@ handle_device() {
 
 config_load hostapd_action
 
-config_foreach handle_device device $2
+# ищем девайс по MAC (а MAC у нас в $3)
+config_foreach handle_device device "$3"
 . "$device_file"
 
 if [ -n "$device" ] && [ -n "$action" ]
 then
-        logger -t hostapd_action $device $action
+        logger -t hostapd_action "$device" "$action"
 
         config_get token ha token
         hostname="$(cat /proc/sys/kernel/hostname)"
@@ -56,13 +60,14 @@ then
         entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
         config_get HA ha url
         url="$HA/api/states/$entity_id"
+
 data=$(cat <<EOF
 {
   "entity_id": "$entity_id",
   "state": "$state",
   "attributes": {
     "source_type": "router",
-    "mac_address": "$2",
+    "mac_address": "$3",
     "user": "$user",
     "friendly_name": "${device}@${room}"
   }
@@ -70,9 +75,13 @@ data=$(cat <<EOF
 EOF
 )
 
-        logger -t hostapd_action $device $data
+        logger -t hostapd_action "$device" "$data"
 
-        curl --silent --output /dev/null --user "$user" --oauth2-bearer "$token" --json "$data" "$url"
+        curl --silent --output /dev/null \
+             --user "$user" \
+             --oauth2-bearer "$token" \
+             --json "$data" "$url"
 fi
 
 rm "$device_file"
+
