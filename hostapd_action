@@ -4,7 +4,7 @@
 # 2: action
 # 3: mac
 
-logger -t hostapd_action_debug "RAW: iface=$1 action=$2 mac=$3 args='$*'"
+#logger -t hostapd_action_debug "RAW: iface=$1 action=$2 mac=$3 args='$*'"
 
 
 case "$2" in
@@ -29,18 +29,18 @@ case "$2" in
   ;;
 esac
 
-logger -t hostapd_action_debug "$action, $state"
+#logger -t hostapd_action_debug "$action, $state"
 
 . /lib/functions.sh
 device_file=$(mktemp -t hostapd_action_device-XXXXXX)
-logger -t hostapd_action_debug "file=$device_file"
+#logger -t hostapd_action_debug "file=$device_file"
 
 handle_device() {
         local type="$1"
         local in_mac="$2"
         config_get mac "$type" mac
         config_get user "$type" user
-	logger -t hostapd_action_debug "$type; $user"
+	#logger -t hostapd_action_debug "$type; $user"
         if [ "$mac" = "$in_mac" ]
         then
                 echo "device=$type; user=$user" >> "$device_file"
@@ -48,14 +48,14 @@ handle_device() {
 }
 
 config_load hostapd_action
-logger -t hostapd_action_debug "Config loaded"
+#logger -t hostapd_action_debug "Config loaded"
 
 config_foreach handle_device device "$3"
 . "$device_file"
 
 if [ -n "$device" ] && [ -n "$action" ]
 then
-        logger -t hostapd_action_debug "Action!!! $device $action"
+        #logger -t hostapd_action_debug "Action!!! $device $action"
 
         config_get token ha token
         hostname="$(cat /proc/sys/kernel/hostname)"
@@ -85,8 +85,6 @@ EOF
              --user "$user" \
              --oauth2-bearer "$token" \
              --json "$data" "$url"
-else
-	logger -t hostapd_action_debug "FAILED"
 fi
 
 rm "$device_file"
