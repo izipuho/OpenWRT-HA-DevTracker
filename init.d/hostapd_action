@@ -8,10 +8,15 @@ STOP=20
 ACTION=/etc/hostapd_action
 
 set_device_init_presence(){
-	config_get iface $1 iface
-	config_get mac $1 mac
-	[[ $iface != none ]] && state=online || state=offline
-	/etc/hostapd_action $iface $state $mac
+        config_get iface "$1" iface
+        config_get mac "$1" mac
+        if [ "$iface" != "none" ]
+        then
+                state=online
+        else
+                state=offline
+        fi
+        /etc/hostapd_action $iface $state $mac
 }
 
 start_service() {
@@ -20,40 +25,46 @@ start_service() {
 #		return 1
 #	fi
 	
-	phones=$(uci show hostapd_action | grep =device | awk -F"." '{print $2}' | awk -F"=" '{print $1}')
+        phones=$(uci show hostapd_action | grep =device | awk -F"." '{print $2}' | awk -F"=" '{print $1}')
 
 	uci delete hostapd_action.network.iface
 	echo starting
-	IFS=$'\n'
-	for iface in $(hostapd_cli interface | tail -n +3)
-	do
-		echo " $iface"
-		PIDFILE=/var/run/hostapd_action_$iface.pid
-		if [[ $iface == *'-main-'* ]]
-		then
-			hostapd_cli -i $iface -a $ACTION -r -B -P $PIDFILE
-			uci add_list hostapd_action.network.iface=$iface
+        IFS=$'\n'
+        for iface in $(hostapd_cli interface | tail -n +3)
+        do
+                echo " $iface"
+                PIDFILE=/var/run/hostapd_action_$iface.pid
+                case "$iface" in
+                        *-main-*)
+                                hostapd_cli -i $iface -a $ACTION -r -B -P $PIDFILE
+                                uci add_list hostapd_action.network.iface=$iface
 
-			for phone in $phones; do
-				echo "  $phone"
-				config_get mac $phone mac
-				#echo "  $mac"
-				uci set hostapd_action.$phone.iface=none
-				#echo $(hostapd_cli -i $iface sta $mac)
-				if [[ `hostapd_cli -i $iface sta $mac | head -n 1` != FAIL ]]
-				then
-					echo "   true"
-					uci set hostapd_action.$phone.iface=$iface
-				fi
-			done
-		fi
-	done
-	for phone in $phones; do
-		config_get iface $phone iface
-		config_get mac $phone mac
-		[[ $iface != none ]] && state=online || state=offline
-		/etc/hostapd_action $iface $state $mac
-	done
+                                for phone in $phones; do
+                                        echo "  $phone"
+                                        config_get mac "$phone" mac
+                                        #echo "  $mac"
+                                        uci set hostapd_action.$phone.iface=none
+                                        #echo $(hostapd_cli -i $iface sta $mac)
+                                        if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
+                                        then
+                                                echo "   true"
+                                                uci set hostapd_action.$phone.iface=$iface
+                                        fi
+                                done
+                        ;;
+                esac
+        done
+        for phone in $phones; do
+                config_get iface "$phone" iface
+                config_get mac "$phone" mac
+                if [ "$iface" != "none" ]
+                then
+                        state=online
+                else
+                        state=offline
+                fi
+                /etc/hostapd_action $iface $state $mac
+        done
 	uci commit hostapd_action
 	#uci foreach hostapd_action device set_device_init_presence
 	unset IFS
@@ -62,8 +73,15 @@ start_service() {
 
 stop_service() {
 	echo stop
-	killall -9 hostapd_cli
-	rm -f /var/run/hostapd_action_*.pid
-	echo stoped
+	for pidfile in /var/run/hostapd_action_*.pid; do
+		[ -f "$pidfile" ] || continue
+		pid=$(cat "$pidfile")
+		if kill -0 "$pid" 2>/dev/null; then
+			kill "$pid"
+			wait "$pid" 2>/dev/null
+		fi
+		rm -f "$pidfile"
+	done
+	echo stopped
 }
 

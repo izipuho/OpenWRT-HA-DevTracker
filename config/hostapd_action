@@ -8,4 +8,4 @@ config hostapd_action network
 
 #config device ''
 #	option mac ''
-#	optoin user ''
+#	option user ''
