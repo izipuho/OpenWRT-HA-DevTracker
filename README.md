@@ -91,13 +91,9 @@ The installer performs for each IP in the selected group:
 ## How it works
 
 - The **init.d service** (`/etc/init.d/hostapd_action`) discovers AP interfaces
-  via `hostapd_cli interface` and runs, per interface:
-
-  ```bash
-  hostapd_cli -a /etc/hostapd_action -r -B -P /var/run/hostapd_action_<iface>.pid -i <iface>
-  ```
-
-  This registers the **action script** for hostapd events on that interface.
+  via `hostapd_cli interface` and uses procd to keep one `hostapd_cli` action
+  listener running per AP interface. This registers the **action script** for
+  hostapd events on that interface.
 
 - The **action script** (`/etc/hostapd_action`) receives:
 
