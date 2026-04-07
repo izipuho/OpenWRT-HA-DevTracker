@@ -45,12 +45,6 @@ set_device_iface(){
 }
 
 start_service() {
-#	if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
-#		echo 'Service already running'
-#		return 1
-#	fi
-
-	config_load hostapd_action
 	echo starting
         ifaces=$(hostapd_cli interface | tail -n +3)
         IFS=$'\n'
@@ -69,10 +63,13 @@ start_service() {
                 esac
         done
 
+	config_load hostapd_action
         config_foreach set_device_iface device
 	uci commit hostapd_action
+
 	config_load hostapd_action
 	config_foreach set_device_init_presence device
 	unset IFS
+
 	echo started
 }
