@@ -62,6 +62,9 @@ config hostapd_action 'network'
 #     option user 'ivan'                  # any attributes you use in entity_id
 ```
 
+Use Home Assistant-safe names for device sections and room names: lowercase
+letters, digits, and underscores only.
+
 2) Fill `install/destinations` with your target groups/IPs:
 
 ```
