@@ -81,7 +81,7 @@ EOF
         logger -t hostapd_action "$device" "$data"
 
         curl --silent --output /dev/null \
-             --user "$user" \
-             --oauth2-bearer "$token" \
-             --json "$data" "$url"
+             --header "Authorization: Bearer $token" \
+             --header "Content-Type: application/json" \
+             --data "$data" "$url"
 fi
