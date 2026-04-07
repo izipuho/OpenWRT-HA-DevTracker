@@ -4,7 +4,6 @@ config hostapd_action ha
 
 config hostapd_action network
 	option host_prefix ''
-	list IFACE ''
 
 #config device ''
 #	option mac ''

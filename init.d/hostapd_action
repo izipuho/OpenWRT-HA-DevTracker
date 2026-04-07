@@ -1,5 +1,4 @@
 #!/bin/sh /etc/rc.common
-config_load hostapd_action
 
 USE_PROCD=1
 START=31
@@ -51,6 +50,7 @@ start_service() {
 #		return 1
 #	fi
 
+	config_load hostapd_action
 	echo starting
         ifaces=$(hostapd_cli interface | tail -n +3)
         IFS=$'\n'

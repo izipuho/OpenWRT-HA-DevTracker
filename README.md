@@ -8,7 +8,7 @@
 - Real-time presence updates (no polling)
 - Runs on OpenWrt using `hostapd_cli -a`
 - UCI configuration (`/etc/config/hostapd_action`)
-- Simple fleet installer (`installer/install.sh`) to deploy to many routers
+- Simple fleet installer (`install/install.sh`) to deploy to many routers
 - Updates HA via **REST**: `POST /api/states/<entity_id>` (with `Authorization: Bearer <token>`)
 
 ## Requirements
@@ -23,7 +23,7 @@
 - Address reachable from the router (e.g., `http://homeassistant.local:8123`)
 - A user **Long-Lived Access Token** (Profile → Long-Lived Tokens)
 
-**On the deployment machine (for `installer/install.sh`):**
+**On the deployment machine (for `install/install.sh`):**
 - `bash`, `ssh`, `scp` with network access to the routers
 
 ## Repository layout
@@ -53,8 +53,6 @@ config hostapd_action 'ha'
 
 config hostapd_action 'network'
     option host_prefix 'device_tracker'   # namespace/prefix if used to build entity_id
-    list IFACE 'wlan0'                    # AP interfaces (add more if needed)
-    # list IFACE 'wlan1'
 
 # Optional: explicit device mapping
 # config device 'iphone_ivan'
@@ -75,7 +73,7 @@ site2:10.8.26.1 10.8.26.10 10.8.26.11 10.8.26.12
 3) Run the **installer**:
 
 ```bash
-cd installer
+cd install
 # Deploy to all groups:
 ./install.sh
 
