@@ -19,13 +19,37 @@ set_device_init_presence(){
         /etc/hostapd_action $iface $state $mac
 }
 
+set_device_iface(){
+        local phone="$1"
+        local iface
+        local mac
+        local found_iface
+
+        echo "  $phone"
+        config_get mac "$phone" mac
+        found_iface=none
+        for iface in $ifaces
+        do
+                case "$iface" in
+                        *-main-*)
+                                #echo $(hostapd_cli -i $iface sta $mac)
+                                if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
+                                then
+                                        echo "   true"
+                                        found_iface=$iface
+                                        break
+                                fi
+                        ;;
+                esac
+        done
+        uci set hostapd_action.$phone.iface=$found_iface
+}
+
 start_service() {
 #	if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
 #		echo 'Service already running'
 #		return 1
 #	fi
-	
-        phones=$(uci show hostapd_action | grep =device | awk -F"." '{print $2}' | awk -F"=" '{print $1}')
 
 	echo starting
         ifaces=$(hostapd_cli interface | tail -n +3)
@@ -41,35 +65,10 @@ start_service() {
                 esac
         done
 
-        for phone in $phones; do
-                echo "  $phone"
-                config_get mac "$phone" mac
-                found_iface=none
-                for iface in $ifaces
-                do
-                        case "$iface" in
-                                *-main-*)
-                                        #echo $(hostapd_cli -i $iface sta $mac)
-                                        if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
-                                        then
-                                                echo "   true"
-                                                found_iface=$iface
-                                                break
-                                        fi
-                                ;;
-                esac
-                done
-                uci set hostapd_action.$phone.iface=$found_iface
-                if [ "$found_iface" != "none" ]
-                then
-                        state=online
-                else
-                        state=offline
-                fi
-                /etc/hostapd_action $found_iface $state $mac
-        done
+        config_foreach set_device_iface device
 	uci commit hostapd_action
-	#uci foreach hostapd_action device set_device_init_presence
+	config_load hostapd_action
+	config_foreach set_device_init_presence device
 	unset IFS
 	echo started
 }
