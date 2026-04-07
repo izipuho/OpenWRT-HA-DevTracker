@@ -85,8 +85,7 @@ The installer performs for each IP in the selected group:
 - copies `../hostapd_action` → `/etc/` and sets `chmod +x`
 - copies `../init.d/hostapd_action` → `/etc/init.d/` and sets `chmod +x`
 - copies `../config/hostapd_action.<group>` → `/etc/config/hostapd_action`
-- kills any previous `hostapd_cli`
-- enables and starts the service: `/etc/init.d/hostapd_action enable && start`
+- enables and restarts the service: `/etc/init.d/hostapd_action enable && restart`
 
 ## How it works
 
@@ -133,5 +132,5 @@ curl -i -H "Authorization: Bearer <TOKEN>" http://ha.local:8123/api/
 
 - **HA unreachable** from the router → check `option url`, DNS/routing/firewall.
 - **Invalid/expired token** → create a new Long-Lived Token.
-- **No events** → ensure `hostapd_cli interface` shows your `wlan*`, service is running, and PID files are created.
+- **No events** → ensure `hostapd_cli interface` shows your AP interfaces and `/etc/init.d/hostapd_action status` reports the service running.
 - **Wrong `entity_id`** → review your mapping/normalization (lowercase, replace invalid chars with `_`).
