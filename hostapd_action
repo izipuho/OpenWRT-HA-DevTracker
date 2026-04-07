@@ -32,8 +32,6 @@ esac
 #logger -t hostapd_action_debug "$action, $state"
 
 . /lib/functions.sh
-device_file=$(mktemp -t hostapd_action_device-XXXXXX)
-#logger -t hostapd_action_debug "file=$device_file"
 
 handle_device() {
         local type="$1"
@@ -43,7 +41,7 @@ handle_device() {
 	#logger -t hostapd_action_debug "$type; $user"
         if [ "$mac" = "$in_mac" ]
         then
-                echo "device=$type; user=$user" >> "$device_file"
+                device="$type"
         fi
 }
 
@@ -51,7 +49,6 @@ config_load hostapd_action
 #logger -t hostapd_action_debug "Config loaded"
 
 config_foreach handle_device device "$3"
-. "$device_file"
 
 if [ -n "$device" ] && [ -n "$action" ]
 then
@@ -86,6 +83,3 @@ EOF
              --oauth2-bearer "$token" \
              --json "$data" "$url"
 fi
-
-rm "$device_file"
-
