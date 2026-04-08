@@ -52,7 +52,10 @@ config hostapd_action 'ha'
     option url   'http://ha.local:8123'   # HA base URL (without /api)
 
 config hostapd_action 'network'
-    option host_prefix 'device_tracker'   # namespace/prefix if used to build entity_id
+    option host_prefix 'ap-'              # optional: derive room from hostname, e.g. ap-kitchen -> kitchen
+    option room ''                        # optional override for derived room
+    option track_all_ifaces '0'           # 1 = listen on all hostapd interfaces
+    option iface_pattern '*-main-*'       # used when track_all_ifaces is 0
 
 # Optional: explicit device mapping
 # config device 'iphone_ivan'
@@ -93,6 +96,9 @@ The installer performs for each IP in the selected group:
   via `hostapd_cli interface` and uses procd to keep one `hostapd_cli` action
   listener running per AP interface. This registers the **action script** for
   hostapd events on that interface.
+  By default, it listens only on interfaces matching `*-main-*`; you can
+  change the pattern with `option iface_pattern` or listen on all interfaces
+  with `option track_all_ifaces '1'`.
 
 - The **action script** (`/etc/hostapd_action`) receives:
 
@@ -102,8 +108,14 @@ The installer performs for each IP in the selected group:
 
   On `AP-STA-CONNECTED` / `AP-STA-DISCONNECTED`, it:
   1) reads the UCI config `hostapd_action` (sections `ha`, `network`, optional `device`),
-  2) constructs an `entity_id` (based on your mapping/template),
-  3) calls **HA REST** (`curl`) on `"$HA_URL/api/states/$entity_id"` with the Bearer token, sending the new state and attributes.
+  2) resolves the room from `option room` or, if empty, derives it from the router hostname using `option host_prefix`,
+  3) constructs an `entity_id` (for example `device_tracker.<device>_<room>`),
+  4) calls **HA REST** (`curl`) on `"$HA_URL/api/states/$entity_id"` with the Bearer token, sending the new state and attributes.
+
+- On service startup, the init script also checks whether each configured device
+  is already associated with one of the tracked AP interfaces and sends an
+  initial `online` / `offline` update to Home Assistant immediately. This
+  state is detected at runtime and is not written back into UCI.
 
 > The script uses the system `logger -t hostapd_action`; check `logread` on the router.
 
@@ -133,4 +145,5 @@ curl -i -H "Authorization: Bearer <TOKEN>" http://ha.local:8123/api/
 - **HA unreachable** from the router → check `option url`, DNS/routing/firewall.
 - **Invalid/expired token** → create a new Long-Lived Token.
 - **No events** → ensure `hostapd_cli interface` shows your AP interfaces and `/etc/init.d/hostapd_action status` reports the service running.
-- **Wrong `entity_id`** → review your mapping/normalization (lowercase, replace invalid chars with `_`).
+- **Wrong `entity_id`** → review your device section names and room resolution (`option room` or hostname derived via `option host_prefix`), and normalize invalid chars to `_`.
+- **No tracked interfaces** → check `option track_all_ifaces` / `option iface_pattern` against the output of `hostapd_cli interface`.

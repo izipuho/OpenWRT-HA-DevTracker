@@ -57,11 +57,25 @@ then
         #logger -t hostapd_action_debug "Action!!! $device $action"
 
         config_get token ha token
-        hostname="$(cat /proc/sys/kernel/hostname)"
-        config_get host_prefix network host_prefix
-        room=${hostname#$host_prefix}
-        entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
         config_get HA ha url
+        config_get room network room
+
+        if [ -n "$room" ]
+        then
+                resolved_room="$room"
+        else
+                hostname="$(cat /proc/sys/kernel/hostname)"
+                config_get host_prefix network host_prefix
+                resolved_room=${hostname#$host_prefix}
+        fi
+
+        if [ -z "$resolved_room" ]
+        then
+                logger -t hostapd_action "room is empty for device '$device'"
+                exit 1
+        fi
+
+        entity_id=$(echo "device_tracker.${device}_${resolved_room}" | tr '-' '_')
         url="$HA/api/states/$entity_id"
 
 data=$(cat <<EOF
@@ -72,7 +86,7 @@ data=$(cat <<EOF
     "source_type": "router",
     "mac_address": "$3",
     "user": "$user",
-    "friendly_name": "${device}@${room}"
+    "friendly_name": "${device}@${resolved_room}"
   }
 }
 EOF

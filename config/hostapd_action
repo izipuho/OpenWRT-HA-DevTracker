@@ -4,6 +4,9 @@ config hostapd_action ha
 
 config hostapd_action network
 	option host_prefix ''
+	option room ''
+	option track_all_ifaces '0'
+	option iface_pattern '*-main-*'
 
 #config device ''
 #	option mac ''

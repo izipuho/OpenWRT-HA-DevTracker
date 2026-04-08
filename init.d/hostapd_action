@@ -6,69 +6,76 @@ STOP=20
 
 ACTION=/etc/hostapd_action
 
-set_device_init_presence(){
-        config_get iface "$1" iface
-        config_get mac "$1" mac
-        if [ "$iface" != "none" ]
-        then
-                state=online
-                logger -t hostapd_action_init "device '$1' is online on '$iface' ($mac)"
-        else
-                state=offline
-                logger -t hostapd_action_init "device '$1' is offline ($mac)"
-        fi
-        /etc/hostapd_action $iface $state $mac
+matches_tracked_iface() {
+        local iface="$1"
+        local track_all_ifaces
+        local iface_pattern
+
+        config_get track_all_ifaces network track_all_ifaces '0'
+        config_get iface_pattern network iface_pattern '*-main-*'
+
+        [ "$track_all_ifaces" = "1" ] && return 0
+
+        case "$iface" in
+                $iface_pattern)
+                        return 0
+                ;;
+        esac
+
+        return 1
 }
 
-set_device_iface(){
+set_device_init_presence(){
         local phone="$1"
         local iface
         local mac
         local found_iface
 
-        echo "  $phone"
         config_get mac "$phone" mac
         found_iface=none
         for iface in $ifaces
         do
-                case "$iface" in
-                        *-main-*)
-                                #echo $(hostapd_cli -i $iface sta $mac)
-                                if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
-                                then
-                                        echo "   true"
-                                        found_iface=$iface
-                                        break
-                                fi
-                        ;;
-                esac
+                matches_tracked_iface "$iface" || continue
+
+                #echo $(hostapd_cli -i $iface sta $mac)
+                if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
+                then
+                        echo "   true"
+                        found_iface=$iface
+                        break
+                fi
         done
-        uci set hostapd_action.$phone.iface=$found_iface
+
+        if [ "$found_iface" != "none" ]
+        then
+                state=online
+                logger -t hostapd_action_init "device '$phone' is online on '$found_iface' ($mac)"
+        else
+                state=offline
+                logger -t hostapd_action_init "device '$phone' is offline ($mac)"
+        fi
+
+        /etc/hostapd_action "$found_iface" "$state" "$mac"
 }
 
 start_service() {
-	echo starting
+        echo starting
+
         ifaces=$(hostapd_cli interface | tail -n +3)
+        config_load hostapd_action
         for iface in $ifaces
         do
                 echo " $iface"
-                case "$iface" in
-                        *-main-*)
-                                procd_open_instance "$iface"
-                                procd_set_param command hostapd_cli -i "$iface" -a "$ACTION" -r
-                                procd_set_param stdout 1
-                                procd_set_param stderr 1
-                                procd_set_param respawn
-                                procd_close_instance
-                        ;;
-                esac
+                matches_tracked_iface "$iface" || continue
+
+                procd_open_instance "$iface"
+                procd_set_param command hostapd_cli -i "$iface" -a "$ACTION" -r
+                procd_set_param stdout 1
+                procd_set_param stderr 1
+                procd_set_param respawn
+                procd_close_instance
         done
 
-	config_load hostapd_action
-        config_foreach set_device_iface device
-	uci commit hostapd_action
-
-	config_load hostapd_action
 	config_foreach set_device_init_presence device
 
 	echo started
