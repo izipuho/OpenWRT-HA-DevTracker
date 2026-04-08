@@ -1,4 +1,4 @@
-# OpenWRT-HA-DevTracker
+# ha-device-tracker
 
 **Push-based Wi‑Fi client presence tracking from OpenWrt to Home Assistant** — no polling.
 `hostapd_cli` triggers an action script on `AP-STA-CONNECTED` / `AP-STA-DISCONNECTED`; the script reads a UCI config and updates the entity state in Home Assistant via REST.
@@ -9,6 +9,7 @@
 - Runs on OpenWrt using `hostapd_cli -a`
 - UCI configuration (`/etc/config/ha-device-tracker`)
 - Simple fleet installer (`install/install.sh`) to deploy to many routers
+- Legacy cleanup script (`install/cleanup-legacy.sh`)
 - Updates HA via **REST**: `POST /api/states/<entity_id>` (with `Authorization: Bearer <token>`)
 
 ## Requirements
@@ -33,10 +34,12 @@ ha-device-tracker           # action hook (gets copied to /etc/ha-device-tracker
 init.d/
   └─ ha-device-tracker      # init.d service (to /etc/init.d/ha-device-tracker)
 config/
+  ├─ ha-device-tracker         # base UCI config template
   ├─ ha-device-tracker.site1   # UCI configs per site
   └─ ha-device-tracker.site2
 install/
   ├─ install.sh             # rollout to groups → IPs
+  ├─ cleanup-legacy.sh      # remove old hostapd_action deployment
   └─ destinations           # site → list of IP addresses
 ```
 
@@ -89,6 +92,22 @@ The installer performs for each IP in the selected group:
 - copies `../init.d/ha-device-tracker` → `/etc/init.d/` and sets `chmod +x`
 - copies `../config/ha-device-tracker.<group>` → `/etc/config/ha-device-tracker`
 - enables and restarts the service: `/etc/init.d/ha-device-tracker enable && restart`
+
+## Legacy cleanup
+
+If a router still has the old `hostapd_action` files deployed, run the
+cleanup script once to remove them safely:
+
+```sh
+./cleanup-legacy.sh
+```
+
+The script:
+- stops and disables `/etc/init.d/hostapd_action` if it exists
+- removes `/etc/hostapd_action`
+- removes `/etc/init.d/hostapd_action`
+- removes `/etc/config/hostapd_action`
+- restarts `/etc/init.d/ha-device-tracker` if it exists
 
 ## How it works
 
