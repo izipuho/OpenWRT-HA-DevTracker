@@ -32,18 +32,18 @@ esac
 #logger -t hostapd_action_debug "$action, $state"
 
 . /lib/functions.sh
-device_file=$(mktemp -t hostapd_action_device-XXXXXX)
-#logger -t hostapd_action_debug "file=$device_file"
 
 handle_device() {
         local type="$1"
         local in_mac="$2"
         config_get mac "$type" mac
         config_get user "$type" user
+        mac=$(printf '%s' "$mac" | tr '[:upper:]' '[:lower:]')
+        in_mac=$(printf '%s' "$in_mac" | tr '[:upper:]' '[:lower:]')
 	#logger -t hostapd_action_debug "$type; $user"
         if [ "$mac" = "$in_mac" ]
         then
-                echo "device=$type; user=$user" >> "$device_file"
+                device="$type"
         fi
 }
 
@@ -51,18 +51,31 @@ config_load hostapd_action
 #logger -t hostapd_action_debug "Config loaded"
 
 config_foreach handle_device device "$3"
-. "$device_file"
 
 if [ -n "$device" ] && [ -n "$action" ]
 then
         #logger -t hostapd_action_debug "Action!!! $device $action"
 
         config_get token ha token
-        hostname="$(cat /proc/sys/kernel/hostname)"
-        config_get host_prefix network host_prefix
-        room=${hostname#$host_prefix}
-        entity_id=$(echo "device_tracker.${device}_${room}" | tr '-' '_')
         config_get HA ha url
+        config_get room network room
+
+        if [ -n "$room" ]
+        then
+                resolved_room="$room"
+        else
+                hostname="$(cat /proc/sys/kernel/hostname)"
+                config_get host_prefix network host_prefix
+                resolved_room=${hostname#$host_prefix}
+        fi
+
+        if [ -z "$resolved_room" ]
+        then
+                logger -t hostapd_action "room is empty for device '$device'"
+                exit 1
+        fi
+
+        entity_id=$(echo "device_tracker.${device}_${resolved_room}" | tr '-' '_')
         url="$HA/api/states/$entity_id"
 
 data=$(cat <<EOF
@@ -73,7 +86,7 @@ data=$(cat <<EOF
     "source_type": "router",
     "mac_address": "$3",
     "user": "$user",
-    "friendly_name": "${device}@${room}"
+    "friendly_name": "${device}@${resolved_room}"
   }
 }
 EOF
@@ -82,10 +95,7 @@ EOF
         logger -t hostapd_action "$device" "$data"
 
         curl --silent --output /dev/null \
-             --user "$user" \
-             --oauth2-bearer "$token" \
-             --json "$data" "$url"
+             --header "Authorization: Bearer $token" \
+             --header "Content-Type: application/json" \
+             --data "$data" "$url"
 fi
-
-rm "$device_file"
-
