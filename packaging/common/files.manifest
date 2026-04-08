@@ -1,0 +1,5 @@
+ha-device-tracker:/etc/ha-device-tracker
+init.d/ha-device-tracker:/etc/init.d/ha-device-tracker
+config/ha-device-tracker:/etc/config/ha-device-tracker
+
+conffile:/etc/config/ha-device-tracker
