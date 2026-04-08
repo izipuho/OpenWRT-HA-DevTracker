@@ -17,7 +17,6 @@ DIST_DIR="$REPO_ROOT/dist"
 CONTROL_FILE="$CONTROL_ROOT/control"
 DATA_TAR="$IPK_ROOT/data.tar.gz"
 CONTROL_TAR="$IPK_ROOT/control.tar.gz"
-DEBIAN_BINARY="$IPK_ROOT/debian-binary"
 OUTPUT_IPK="$DIST_DIR/${NAME}_${PACKAGE_VERSION}_${ARCH}.ipk"
 
 sh "$COMMON_DIR/build-staging.sh"
@@ -40,12 +39,10 @@ License: $LICENSE
 Description: $DESCRIPTION
 EOF
 
-printf '2.0\n' >"$DEBIAN_BINARY"
-
 tar -C "$PAYLOAD_ROOT" -czf "$DATA_TAR" .
 tar -C "$CONTROL_ROOT" -czf "$CONTROL_TAR" .
 
 rm -f "$OUTPUT_IPK"
-ar -r "$OUTPUT_IPK" "$DEBIAN_BINARY" "$DATA_TAR" "$CONTROL_TAR" >/dev/null 2>&1
+ar -r "$OUTPUT_IPK" "$CONTROL_TAR" "$DATA_TAR" >/dev/null 2>&1
 
 printf '%s\n' "$OUTPUT_IPK"
