@@ -10,12 +10,12 @@ while IFS= read -r place; do
 		for host in $ips; do
 			IFS="@" read -r ip <<< "$host"
 			echo ">$ip"
-			scp -O ../hostapd_action $ip:/etc/ && ssh -n $ip "chmod +x /etc/hostapd_action"
-			scp -O ../init.d/hostapd_action $ip:/etc/init.d/ && ssh -n $ip "chmod +x /etc/init.d/hostapd_action"
-			scp -O ../config/hostapd_action.$name $ip:/etc/config/hostapd_action
-			#ssh -n $ip "/etc/init.d/hostapd_action stop"
-			ssh -n $ip "/etc/init.d/hostapd_action enable"
-			ssh -n $ip "/etc/init.d/hostapd_action restart"
+			scp -O ../ha-device-tracker $ip:/etc/ && ssh -n $ip "chmod +x /etc/ha-device-tracker"
+			scp -O ../init.d/ha-device-tracker $ip:/etc/init.d/ && ssh -n $ip "chmod +x /etc/init.d/ha-device-tracker"
+			scp -O ../config/ha-device-tracker.$name $ip:/etc/config/ha-device-tracker
+			#ssh -n $ip "/etc/init.d/ha-device-tracker stop"
+			ssh -n $ip "/etc/init.d/ha-device-tracker enable"
+			ssh -n $ip "/etc/init.d/ha-device-tracker restart"
 
 			#scp -O ../test.sh $ip:/tmp/ && 	ssh -n $ip "chmod +x /tmp/test.sh && sh /tmp/test.sh"
 

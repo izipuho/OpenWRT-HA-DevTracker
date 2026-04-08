@@ -1,8 +1,8 @@
-config hostapd_action ha
+config ha-device-tracker ha
 	option token ''
 	option url ''
 
-config hostapd_action network
+config ha-device-tracker network
 	option host_prefix ''
 	option room ''
 	option track_all_ifaces '0'
