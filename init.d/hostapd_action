@@ -12,8 +12,10 @@ set_device_init_presence(){
         if [ "$iface" != "none" ]
         then
                 state=online
+                logger -t hostapd_action_init "device '$1' is online on '$iface' ($mac)"
         else
                 state=offline
+                logger -t hostapd_action_init "device '$1' is offline ($mac)"
         fi
         /etc/hostapd_action $iface $state $mac
 }
