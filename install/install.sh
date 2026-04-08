@@ -1,26 +1,36 @@
 #!/bin/bash
 
+set -euo pipefail
+
+target=${1:-}
+package=$(find ../dist -maxdepth 1 -type f -name 'ha-device-tracker_*.ipk' | sort | tail -n 1)
+
+if [[ -z ${package:-} ]]; then
+	echo "No ha-device-tracker .ipk found in ../dist" >&2
+	exit 1
+fi
+
 while IFS= read -r place; do
 	echo $place
 	IFS=":" read -r name ips <<< "$place"
 	echo "Processing $name"
 
-	if [[ $name == $1 ]] || [[ -z $1 ]]
-	then
-		for host in $ips; do
-			IFS="@" read -r ip <<< "$host"
-			echo ">$ip"
-			scp -O ../ha-device-tracker $ip:/etc/ && ssh -n $ip "chmod +x /etc/ha-device-tracker"
-			scp -O ../init.d/ha-device-tracker $ip:/etc/init.d/ && ssh -n $ip "chmod +x /etc/init.d/ha-device-tracker"
-			scp -O ../config/ha-device-tracker.$name $ip:/etc/config/ha-device-tracker
-			#ssh -n $ip "/etc/init.d/ha-device-tracker stop"
-			ssh -n $ip "/etc/init.d/ha-device-tracker enable"
-			ssh -n $ip "/etc/init.d/ha-device-tracker restart"
+	for host in $ips; do
+		IFS="@" read -r ip <<< "$host"
 
-			#scp -O ../test.sh $ip:/tmp/ && 	ssh -n $ip "chmod +x /tmp/test.sh && sh /tmp/test.sh"
+		if [[ -n $target ]] && [[ $name != "$target" ]] && [[ $ip != "$target" ]]; then
+			continue
+		fi
 
-			echo " "
-		done
-	fi
+		echo ">$ip"
+		scp -O cleanup-legacy.sh "$ip:/tmp/"
+		ssh -n "$ip" "sh /tmp/cleanup-legacy.sh"
+		scp -O "$package" "$ip:/tmp/"
+		ssh -n "$ip" "opkg install /tmp/$(basename "$package")"
+		scp -O "../config/ha-device-tracker.$name" "$ip:/etc/config/ha-device-tracker"
+		ssh -n "$ip" "/etc/init.d/ha-device-tracker restart"
+
+		echo " "
+	done
 	unset IFS
 done <destinations
