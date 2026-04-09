@@ -78,6 +78,43 @@ return view.extend({
 		});
 	},
 
+	renderServiceRow: function(serviceStatus) {
+		var running = this.getServiceRunning(serviceStatus);
+
+		return E('div', {
+			'style': 'display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; width:100%;'
+		}, [
+			E('div', {
+				'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;'
+			}, [
+				E('span', {}, [ running ? _('Running') : _('Stopped') ])
+			]),
+			E('div', {
+				'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;'
+			}, [
+				E('button', {
+					'class': 'btn cbi-button cbi-button-add',
+					'click': ui.createHandlerFn(this, 'runAction', 'start'),
+					'disabled': running
+				}, [ _('Start') ]),
+				E('button', {
+					'class': 'btn cbi-button cbi-button-remove',
+					'click': ui.createHandlerFn(this, 'runAction', 'stop'),
+					'disabled': !running
+				}, [ _('Stop') ]),
+				E('button', {
+					'class': 'btn cbi-button cbi-button-apply',
+					'click': ui.createHandlerFn(this, 'runAction', 'restart'),
+					'disabled': !running
+				}, [ _('Restart') ]),
+				E('button', {
+					'class': 'btn cbi-button cbi-button-action',
+					'click': ui.createHandlerFn(this, 'showLog')
+				}, [ _('View log') ])
+			])
+		]);
+	},
+
 	render: function(data) {
 		var m, s, o;
 		var serviceStatus = data ? data[1] : null;
@@ -102,35 +139,9 @@ return view.extend({
 		o.description = _('Long-lived access token for updating device_tracker entities.');
 
 		o = s.option(form.DummyValue, '_service', _('Service'));
-		o.rawhtml = true;
-		o.cfgvalue = L.bind(function() {
-			var running = this.getServiceRunning(serviceStatus);
-
-			return E('div', {
-				'style': 'display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;'
-			}, [
-				E('span', {}, [ running ? _('Running') : _('Stopped') ]),
-				E('button', {
-					'class': 'btn cbi-button',
-					'click': ui.createHandlerFn(this, 'runAction', 'start'),
-					'disabled': running
-				}, [ _('Start') ]),
-				E('button', {
-					'class': 'btn cbi-button',
-					'click': ui.createHandlerFn(this, 'runAction', 'stop'),
-					'disabled': !running
-				}, [ _('Stop') ]),
-				E('button', {
-					'class': 'btn cbi-button',
-					'click': ui.createHandlerFn(this, 'runAction', 'restart'),
-					'disabled': !running
-				}, [ _('Restart') ]),
-				E('button', {
-					'class': 'btn cbi-button',
-					'click': ui.createHandlerFn(this, 'showLog')
-				}, [ _('View log') ])
-			]).outerHTML;
-		}, this);
+		o.cfgvalue = function() {
+			return '';
+		};
 		o.description = _('Current service state and controls.');
 
 		s = m.section(form.NamedSection, 'network', 'ha-device-tracker', _('Network'));
@@ -168,6 +179,15 @@ return view.extend({
 		o = s.option(form.Value, 'user', _('Person'));
 		o.rmempty = false;
 
-		return m.render();
+		return m.render().then(L.bind(function(mapNode) {
+			var serviceField = mapNode.querySelector('[data-name="_service"] .cbi-value-field');
+
+			if (serviceField) {
+				serviceField.innerHTML = '';
+				serviceField.appendChild(this.renderServiceRow(serviceStatus));
+			}
+
+			return mapNode;
+		}, this));
 	}
 });
