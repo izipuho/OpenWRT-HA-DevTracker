@@ -5,4 +5,3 @@ install/test*
 install/destinations.*
 .DS_Store
 build
-dist
