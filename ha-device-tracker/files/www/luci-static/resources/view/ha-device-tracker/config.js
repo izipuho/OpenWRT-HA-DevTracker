@@ -98,9 +98,6 @@ return view.extend({
 
 	renderStatusPanel: function(serviceStatus) {
 		var self = this;
-		var deviceCount = uci.sections('ha-device-tracker', 'device').length;
-		var roomSection = uci.get('ha-device-tracker', 'network', 'room');
-		var roomMode = roomSection ? _('Explicit room') : _('Derived from hostname');
 
 		this.statusNodes = {
 			service: E('span', { 'class': 'label' }, [ _('Unknown') ])
@@ -115,24 +112,12 @@ return view.extend({
 		});
 
 		return E('div', { 'class': 'cbi-section' }, [
-			E('h3', {}, [ _('Status') ]),
-			E('div', { 'class': 'cbi-value' }, [
-				E('label', { 'class': 'cbi-value-title' }, [ _('Service') ]),
-				E('div', { 'class': 'cbi-value-field' }, [ this.statusNodes.service ])
-			]),
-			E('div', { 'class': 'cbi-value' }, [
-				E('label', { 'class': 'cbi-value-title' }, [ _('Tracked devices') ]),
-				E('div', { 'class': 'cbi-value-field' }, [ String(deviceCount) ])
-			]),
-			E('div', { 'class': 'cbi-value' }, [
-				E('label', { 'class': 'cbi-value-title' }, [ _('Room mode') ]),
-				E('div', { 'class': 'cbi-value-field' }, [ roomMode ])
-			]),
-			E('div', { 'class': 'cbi-value' }, [
-				E('label', { 'class': 'cbi-value-title' }, [ _('Config path') ]),
-				E('div', { 'class': 'cbi-value-field' }, [ '/etc/config/ha-device-tracker' ])
-			]),
-			E('div', { 'class': 'cbi-page-actions' }, [
+			E('div', {
+				'class': 'cbi-page-actions',
+				'style': 'display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; margin-bottom:0;'
+			}, [
+				E('span', { 'style': 'font-weight:600;' }, [ _('Service') ]),
+				this.statusNodes.service,
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'click': ui.createHandlerFn(this, 'runAction', 'restart')
@@ -175,24 +160,22 @@ return view.extend({
 		o.description = _('Long-lived access token used to update device_tracker entities.');
 
 		s = m.section(form.NamedSection, 'network', 'ha-device-tracker', _('Network'));
-		s.tab('general', _('General'));
-		s.tab('advanced', _('Advanced'));
 
-		o = s.taboption('general', form.Value, 'room', _('Explicit room'));
+		o = s.option(form.Value, 'room', _('Explicit room'));
 		o.placeholder = _('Leave empty to derive it from hostname');
-		o.description = _('Set a fixed room name here, or leave it empty to calculate the room from the router hostname.');
+		o.description = _('Set a fixed room name here. If left empty, the room is derived from the router hostname after removing the hostname prefix below.');
 
-		o = s.taboption('advanced', form.Value, 'host_prefix', _('Hostname prefix to strip'));
+		o = s.option(form.Value, 'host_prefix', _('Hostname prefix to strip'));
 		o.placeholder = 'openwrt-';
 		o.depends({ room: '' });
-		o.description = _('Used only when Explicit room is empty. The remaining hostname suffix becomes the room name.');
+		o.description = _('Used only when Explicit room is empty. Example: hostname `openwrt-kitchen` with prefix `openwrt-` becomes room `kitchen`.');
 
-		o = s.taboption('advanced', form.Flag, 'track_all_ifaces', _('Track all Wi-Fi interfaces'));
+		o = s.option(form.Flag, 'track_all_ifaces', _('Track all Wi-Fi interfaces'));
 		o.default = '0';
 		o.rmempty = false;
 		o.description = _('Enable this to watch every hostapd interface. When enabled, the interface pattern below is ignored.');
 
-		o = s.taboption('advanced', form.Value, 'iface_pattern', _('Interface pattern'));
+		o = s.option(form.Value, 'iface_pattern', _('Interface pattern'));
 		o.placeholder = '*-main-*';
 		o.depends('track_all_ifaces', '0');
 		o.description = _('Shell wildcard used to select which Wi-Fi interfaces should be tracked when Track all Wi-Fi interfaces is disabled.');
