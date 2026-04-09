@@ -87,6 +87,26 @@ return view.extend({
 	},
 
 	renderServiceRow: function(running) {
+		var startAttrs = {
+			'class': 'btn cbi-button cbi-button-add',
+			'click': ui.createHandlerFn(this, 'runAction', 'start')
+		};
+		var stopAttrs = {
+			'class': 'btn cbi-button cbi-button-remove',
+			'click': ui.createHandlerFn(this, 'runAction', 'stop')
+		};
+		var restartAttrs = {
+			'class': 'btn cbi-button cbi-button-apply',
+			'click': ui.createHandlerFn(this, 'runAction', 'restart')
+		};
+
+		if (running)
+			startAttrs.disabled = 'disabled';
+		else {
+			stopAttrs.disabled = 'disabled';
+			restartAttrs.disabled = 'disabled';
+		}
+
 		return E('div', {
 			'style': 'display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; width:100%;'
 		}, [
@@ -98,21 +118,9 @@ return view.extend({
 			E('div', {
 				'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;'
 			}, [
-				E('button', {
-					'class': 'btn cbi-button cbi-button-add',
-					'click': ui.createHandlerFn(this, 'runAction', 'start'),
-					'disabled': running
-				}, [ _('Start') ]),
-				E('button', {
-					'class': 'btn cbi-button cbi-button-remove',
-					'click': ui.createHandlerFn(this, 'runAction', 'stop'),
-					'disabled': !running
-				}, [ _('Stop') ]),
-				E('button', {
-					'class': 'btn cbi-button cbi-button-apply',
-					'click': ui.createHandlerFn(this, 'runAction', 'restart'),
-					'disabled': !running
-				}, [ _('Restart') ]),
+				E('button', startAttrs, [ _('Start') ]),
+				E('button', stopAttrs, [ _('Stop') ]),
+				E('button', restartAttrs, [ _('Restart') ]),
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'click': ui.createHandlerFn(this, 'showLog')
