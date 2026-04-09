@@ -38,14 +38,17 @@ esac
 handle_device() {
         local type="$1"
         local in_mac="$2"
-        config_get mac "$type" mac
-        config_get user "$type" user
-        mac=$(printf '%s' "$mac" | tr '[:upper:]' '[:lower:]')
+        local section_mac
+        local section_user
+        config_get section_mac "$type" mac
+        config_get section_user "$type" user
+        section_mac=$(printf '%s' "$section_mac" | tr '[:upper:]' '[:lower:]')
         in_mac=$(printf '%s' "$in_mac" | tr '[:upper:]' '[:lower:]')
-	#logger -t "$APP_NAME-debug" "$type; $user"
-        if [ "$mac" = "$in_mac" ]
+	#logger -t "$APP_NAME-debug" "$type; $section_user"
+        if [ "$section_mac" = "$in_mac" ]
         then
                 device="$type"
+                user="$section_user"
         fi
 }
 

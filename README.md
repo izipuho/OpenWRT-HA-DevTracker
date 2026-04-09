@@ -54,8 +54,9 @@ install/
 
 ## Build package
 
-The project is now structured as an OpenWrt package directory that can be used
-from an OpenWrt SDK/buildroot as a local feed package.
+The project is now structured as an OpenWrt package directory and includes a
+root wrapper `Makefile` that downloads a temporary OpenWrt SDK, connects this
+repository as a local feed, and builds the package.
 
 The package recipe is:
 
@@ -67,8 +68,41 @@ The package payload is:
 - `ha-device-tracker/files/etc/init.d/ha-device-tracker`
 - `ha-device-tracker/files/etc/config/ha-device-tracker`
 
-Build the package with OpenWrt tooling on a Debian/Linux machine, then place
-the resulting `.ipk` into `dist/`.
+Build on a Debian/Linux machine:
+
+```bash
+make build
+```
+
+Defaults are currently set in the root `Makefile`:
+
+- `RELEASE=24.10.3`
+- `TARGET=ath79`
+- `SUBTARGET=generic`
+
+Override them when needed:
+
+```bash
+make build RELEASE=24.10.3 TARGET=ramips SUBTARGET=mt7621
+```
+
+Useful debug mode:
+
+```bash
+make build LEAVE_BUILD=yes
+```
+
+The build wrapper will:
+
+- create a temporary SDK directory
+- download and unpack the matching OpenWrt SDK
+- add this repository as a local feed
+- build `ha-device-tracker`
+- copy the resulting `.ipk` into `dist/`
+
+For this package, `PKGARCH:=all` is set in the package definition, so the
+resulting package should be architecture-independent within the same OpenWrt
+package-manager generation.
 
 ## Installation & rollout
 
@@ -123,6 +157,14 @@ The installer performs for each IP in the selected group:
 - installs the package via `opkg install`
 - copies `../ha-device-tracker/config/ha-device-tracker.<group>` → `/etc/config/ha-device-tracker`
 - restarts the service: `/etc/init.d/ha-device-tracker restart`
+
+Typical flow:
+
+```bash
+make build
+cd install
+./install.sh 10.8.25.4
+```
 
 ## Legacy cleanup
 
