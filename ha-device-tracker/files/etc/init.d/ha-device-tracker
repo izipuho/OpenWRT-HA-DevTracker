@@ -40,7 +40,6 @@ set_device_init_presence(){
 
                 if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
                 then
-                        echo "   true"
                         found_iface=$iface
                         break
                 fi
@@ -49,9 +48,11 @@ set_device_init_presence(){
         if [ "$found_iface" != "none" ]
         then
                 state=online
+                echo "$phone online on $found_iface"
                 logger -t "$APP_NAME-init" "device '$phone' is online on '$found_iface' ($mac)"
         else
                 state=offline
+                echo "$phone offline"
                 logger -t "$APP_NAME-init" "device '$phone' is offline ($mac)"
         fi
 
@@ -59,13 +60,10 @@ set_device_init_presence(){
 }
 
 start_service() {
-        echo starting
-
         ifaces=$(hostapd_cli interface | tail -n +3)
         config_load "$APP_NAME"
         for iface in $ifaces
         do
-                echo " $iface"
                 matches_tracked_iface "$iface" || continue
 
                 procd_open_instance "$iface"
@@ -77,8 +75,6 @@ start_service() {
         done
 
 	config_foreach set_device_init_presence device
-
-	echo started
 }
 
 reload_service() {
