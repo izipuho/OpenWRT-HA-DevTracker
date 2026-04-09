@@ -28,12 +28,20 @@ return view.extend({
 	},
 
 	getServiceRunning: function(serviceStatus) {
-		var instances, instanceName;
+		var service, instances, instanceName;
 
-		if (!serviceStatus || !serviceStatus['ha-device-tracker'])
+		if (!serviceStatus)
 			return false;
 
-		instances = serviceStatus['ha-device-tracker'].instances || {};
+		service = serviceStatus['ha-device-tracker'] || serviceStatus;
+
+		if (Array.isArray(service))
+			service = service[0] || {};
+
+		if (typeof service.running === 'boolean')
+			return service.running;
+
+		instances = service.instances || {};
 
 		for (instanceName in instances)
 			if (instances[instanceName].running)
@@ -78,9 +86,7 @@ return view.extend({
 		});
 	},
 
-	renderServiceRow: function(serviceStatus) {
-		var running = this.getServiceRunning(serviceStatus);
-
+	renderServiceRow: function(running) {
 		return E('div', {
 			'style': 'display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; width:100%;'
 		}, [
@@ -116,8 +122,9 @@ return view.extend({
 	},
 
 	render: function(data) {
-		var m, s, o;
+		var m, s, o, running;
 		var serviceStatus = data ? data[1] : null;
+		running = this.getServiceRunning(serviceStatus);
 
 		m = new form.Map(
 			'ha-device-tracker',
@@ -184,7 +191,7 @@ return view.extend({
 
 			if (serviceField) {
 				serviceField.innerHTML = '';
-				serviceField.appendChild(this.renderServiceRow(serviceStatus));
+				serviceField.appendChild(this.renderServiceRow(running));
 			}
 
 			return mapNode;
