@@ -2,10 +2,17 @@
 	"luci-app-ha-device-tracker": {
 		"description": "Grant access to HA Device Tracker configuration",
 		"read": {
-			"uci": [ "ha-device-tracker" ]
+			"uci": [ "ha-device-tracker" ],
+			"ubus": {
+				"service": [ "list" ]
+			}
 		},
 		"write": {
-			"uci": [ "ha-device-tracker" ]
+			"uci": [ "ha-device-tracker" ],
+			"file": {
+				"/etc/init.d/ha-device-tracker": [ "exec" ],
+				"/sbin/logread": [ "exec" ]
+			}
 		}
 	}
 }
