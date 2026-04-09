@@ -74,16 +74,19 @@ Build on a Debian/Linux machine:
 make build
 ```
 
-Defaults are currently set in the root `Makefile`:
+By default, the root wrapper `Makefile` asks the OpenWrt sysupgrade API for the
+current latest stable releases and builds the package for each of them.
 
-- `RELEASE=24.10.3`
-- `TARGET=ath79`
-- `SUBTARGET=generic`
-
-Override them when needed:
+Build for one specific release:
 
 ```bash
-make build RELEASE=24.10.3 TARGET=ramips SUBTARGET=mt7621
+make build RELEASES="24.10.6"
+```
+
+Build for a custom target/subtarget:
+
+```bash
+make build RELEASES="24.10.6" TARGET=ramips SUBTARGET=mt7621
 ```
 
 Useful debug mode:
@@ -98,7 +101,7 @@ The build wrapper will:
 - download and unpack the matching OpenWrt SDK
 - add this repository as a local feed
 - build `ha-device-tracker`
-- copy the resulting `.ipk` into `dist/`
+- copy the resulting package artifact into `dist/`
 
 For this package, `PKGARCH:=all` is set in the package definition, so the
 resulting package should be architecture-independent within the same OpenWrt
@@ -161,7 +164,7 @@ The installer performs for each IP in the selected group:
 Typical flow:
 
 ```bash
-make build
+make build RELEASES="24.10.6"
 cd install
 ./install.sh 10.8.25.4
 ```

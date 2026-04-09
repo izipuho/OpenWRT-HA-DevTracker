@@ -1,18 +1,34 @@
-RELEASE ?= 24.10.3
 TARGET ?= ath79
 SUBTARGET ?= generic
+RELEASES ?=
 
 PKG_NAME := ha-device-tracker
 FEED_NAME := local
 LEAVE_BUILD ?= no
 
-.PHONY: build
+.PHONY: build build-one
 
 build:
 	@set -eu; \
+	releases="$(RELEASES)"; \
+	if [ -z "$$releases" ]; then \
+		releases=$$(curl -fsSL 'https://sysupgrade.openwrt.org/api/v1/latest' | \
+			grep -Eo '"[0-9]+\.[0-9]+\.[0-9]+"' | tr -d '"' | sort -V); \
+	fi; \
+	if [ -z "$$releases" ]; then \
+		echo "Could not determine latest OpenWrt releases from sysupgrade API" >&2; \
+		exit 1; \
+	fi; \
+	for release in $$releases; do \
+		echo "==> Building $(PKG_NAME) for OpenWrt $$release"; \
+		$(MAKE) build-one RELEASE="$$release" TARGET="$(TARGET)" SUBTARGET="$(SUBTARGET)" LEAVE_BUILD="$(LEAVE_BUILD)" SDK_FILE="$(SDK_FILE)"; \
+	done
+
+build-one:
+	@set -eu; \
 	if [ -z "$(RELEASE)" ] || [ -z "$(TARGET)" ] || [ -z "$(SUBTARGET)" ]; then \
 		echo "Set RELEASE, TARGET and SUBTARGET before running build." >&2; \
-		echo "Example: make build RELEASE=24.10.3 TARGET=ath79 SUBTARGET=generic" >&2; \
+		echo "Example: make build-one RELEASE=24.10.5 TARGET=ath79 SUBTARGET=generic" >&2; \
 		exit 1; \
 	fi; \
 	build_dir=$$(mktemp -d /tmp/ha-device-tracker-sdk-XXXXX); \
@@ -52,10 +68,15 @@ build:
 	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
 	$(MAKE) defconfig; \
 	$(MAKE) package/$(PKG_NAME)/compile V=s; \
-	ipk_path=$$(find "$$sdk_root/bin" -name '$(PKG_NAME)*.ipk' | head -n 1); \
-	if [ -z "$$ipk_path" ]; then \
-		echo "Built package not found under $$sdk_root/bin" >&2; \
+	case "$(RELEASE)" in \
+		24.*) pkg_ext=ipk ;; \
+		25.12*|25.1[2-9]*|2[6-9].*|[3-9][0-9].*) pkg_ext=apk ;; \
+		*) pkg_ext=ipk ;; \
+	esac; \
+	pkg_path=$$(find "$$sdk_root/bin" -name '$(PKG_NAME)*.'"$$pkg_ext" | head -n 1); \
+	if [ -z "$$pkg_path" ]; then \
+		echo "Built package (*.$$pkg_ext) not found under $$sdk_root/bin" >&2; \
 		exit 1; \
 	fi; \
-	cp "$$ipk_path" "$$dist_dir/"; \
-	echo "Copied $$ipk_path to $$dist_dir/"
+	cp "$$pkg_path" "$$dist_dir/"; \
+	echo "Copied $$pkg_path to $$dist_dir/"
