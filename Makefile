@@ -28,7 +28,7 @@ build:
 	base_url="https://downloads.openwrt.org/releases/$(RELEASE)/targets/$(TARGET)/$(SUBTARGET)"; \
 	sdk_file="$(SDK_FILE)"; \
 	if [ -z "$$sdk_file" ]; then \
-		sdk_file=$$(curl -fsSL "$$base_url/sha256sums" | sed -n 's/.* \(openwrt-sdk-$(RELEASE)-$(TARGET)-$(SUBTARGET)_[^ ]*\.tar\.zst\)$$/\1/p' | head -n 1); \
+		sdk_file=$$(curl -fsSL "$$base_url/sha256sums" | grep -o 'openwrt-sdk-$(RELEASE)-$(TARGET)-$(SUBTARGET)_[^ ]*\.tar\.zst' | head -n 1); \
 	fi; \
 	if [ -z "$$sdk_file" ]; then \
 		echo "Could not determine SDK archive from $$base_url/sha256sums" >&2; \
