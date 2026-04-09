@@ -45,10 +45,15 @@ return view.extend({
 		o.placeholder = '*-main-*';
 		o.depends('track_all_ifaces', '0');
 
-		s = m.section(form.TypedSection, 'device', _('Tracked devices'));
+		s = m.section(form.GridSection, 'device', _('Tracked devices'));
 		s.anonymous = false;
 		s.addremove = true;
 		s.sortable = true;
+		s.nodescriptions = true;
+		s.modaltitle = _('Tracked device');
+		s.sectiontitle = function(section_id) {
+			return _('Device') + ' ' + section_id;
+		};
 
 		o = s.option(form.Value, 'mac', _('MAC address'));
 		o.datatype = 'macaddr';
