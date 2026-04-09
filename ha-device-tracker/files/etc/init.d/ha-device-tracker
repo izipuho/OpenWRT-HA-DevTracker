@@ -80,3 +80,12 @@ start_service() {
 
 	echo started
 }
+
+reload_service() {
+        stop
+        start
+}
+
+service_triggers() {
+        procd_add_reload_trigger "$APP_NAME"
+}

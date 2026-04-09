@@ -1,0 +1,11 @@
+{
+	"luci-app-ha-device-tracker": {
+		"description": "Grant access to HA Device Tracker configuration",
+		"read": {
+			"uci": [ "ha-device-tracker" ]
+		},
+		"write": {
+			"uci": [ "ha-device-tracker" ]
+		}
+	}
+}

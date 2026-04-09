@@ -64,8 +64,10 @@ build-one:
 	cd "$$sdk_root"; \
 	./scripts/feeds update -a; \
 	./scripts/feeds install curl; \
+	./scripts/feeds install luci-base; \
 	./scripts/feeds install $(PKG_NAME); \
 	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
+	grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
 	$(MAKE) defconfig; \
 	$(MAKE) package/$(PKG_NAME)/compile V=s; \
 	case "$(RELEASE)" in \
@@ -73,10 +75,12 @@ build-one:
 		25.12*|25.1[2-9]*|2[6-9].*|[3-9][0-9].*) pkg_ext=apk ;; \
 		*) pkg_ext=ipk ;; \
 	esac; \
-	pkg_path=$$(find "$$sdk_root/bin" -name '$(PKG_NAME)*.'"$$pkg_ext" | head -n 1); \
-	if [ -z "$$pkg_path" ]; then \
-		echo "Built package (*.$$pkg_ext) not found under $$sdk_root/bin" >&2; \
+	pkg_paths=$$(find "$$sdk_root/bin" \( -name '$(PKG_NAME)*.'"$$pkg_ext" -o -name 'luci-app-$(PKG_NAME)*.'"$$pkg_ext" \) | sort); \
+	if [ -z "$$pkg_paths" ]; then \
+		echo "Built packages (*.$$pkg_ext) not found under $$sdk_root/bin" >&2; \
 		exit 1; \
 	fi; \
-	cp "$$pkg_path" "$$dist_dir/"; \
-	echo "Copied $$pkg_path to $$dist_dir/"
+	for pkg_path in $$pkg_paths; do \
+		cp "$$pkg_path" "$$dist_dir/"; \
+		echo "Copied $$pkg_path to $$dist_dir/"; \
+	done

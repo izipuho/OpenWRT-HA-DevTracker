@@ -1,0 +1,13 @@
+{
+	"admin/services/ha-device-tracker": {
+		"title": "HA Device Tracker",
+		"order": 90,
+		"action": {
+			"type": "view",
+			"path": "ha-device-tracker/config"
+		},
+		"depends": {
+			"acl": [ "luci-app-ha-device-tracker" ]
+		}
+	}
+}
