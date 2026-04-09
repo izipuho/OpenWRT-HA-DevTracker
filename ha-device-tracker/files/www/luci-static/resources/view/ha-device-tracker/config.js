@@ -53,6 +53,15 @@ return view.extend({
 
 		this.statusNodes.service.textContent = running ? _('Running') : _('Stopped');
 		this.statusNodes.service.className = running ? 'label success' : 'label warning';
+
+		if (this.statusNodes.start)
+			this.statusNodes.start.disabled = running;
+
+		if (this.statusNodes.stop)
+			this.statusNodes.stop.disabled = !running;
+
+		if (this.statusNodes.restart)
+			this.statusNodes.restart.disabled = !running;
 	},
 
 	runAction: function(action) {
@@ -100,7 +109,19 @@ return view.extend({
 		var self = this;
 
 		this.statusNodes = {
-			service: E('span', { 'class': 'label' }, [ _('Unknown') ])
+			service: E('span', { 'class': 'label' }, [ _('Unknown') ]),
+			start: E('button', {
+				'class': 'btn cbi-button',
+				'click': ui.createHandlerFn(this, 'runAction', 'start')
+			}, [ _('Start') ]),
+			stop: E('button', {
+				'class': 'btn cbi-button',
+				'click': ui.createHandlerFn(this, 'runAction', 'stop')
+			}, [ _('Stop') ]),
+			restart: E('button', {
+				'class': 'btn cbi-button cbi-button-action',
+				'click': ui.createHandlerFn(this, 'runAction', 'restart')
+			}, [ _('Restart') ])
 		};
 
 		this.updateStatusPanel(serviceStatus);
@@ -114,24 +135,25 @@ return view.extend({
 		return E('div', { 'class': 'cbi-section' }, [
 			E('div', {
 				'class': 'cbi-page-actions',
-				'style': 'display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; margin-bottom:0;'
+				'style': 'display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin:0; padding:0;'
 			}, [
-				E('span', { 'style': 'font-weight:600;' }, [ _('Service') ]),
-				this.statusNodes.service,
-				E('button', {
-					'class': 'btn cbi-button cbi-button-action',
-					'click': ui.createHandlerFn(this, 'runAction', 'restart')
-				}, [ _('Restart service') ]),
-				' ',
-				E('button', {
-					'class': 'btn cbi-button',
-					'click': ui.createHandlerFn(this, 'runAction', 'reload')
-				}, [ _('Reload config') ]),
-				' ',
-				E('button', {
-					'class': 'btn cbi-button',
-					'click': ui.createHandlerFn(this, 'showLog')
-				}, [ _('Open log') ])
+				E('div', {
+					'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;'
+				}, [
+					E('span', { 'style': 'color:#666;' }, [ _('Service') ]),
+					this.statusNodes.service
+				]),
+				E('div', {
+					'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;'
+				}, [
+					this.statusNodes.start,
+					this.statusNodes.stop,
+					this.statusNodes.restart,
+					E('button', {
+						'class': 'btn cbi-button',
+						'click': ui.createHandlerFn(this, 'showLog')
+					}, [ _('Open log') ])
+				])
 			])
 		]);
 	},
