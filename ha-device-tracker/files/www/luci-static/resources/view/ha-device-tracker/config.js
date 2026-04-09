@@ -101,27 +101,37 @@ return view.extend({
 		o.rmempty = false;
 		o.description = _('Long-lived access token for updating device_tracker entities.');
 
-		o = s.option(form.DummyValue, '_service_status', _('Service status'));
+		o = s.option(form.DummyValue, '_service', _('Service'));
+		o.rawhtml = true;
 		o.cfgvalue = L.bind(function() {
-			return this.getServiceRunning(serviceStatus) ? _('Running') : _('Stopped');
+			var running = this.getServiceRunning(serviceStatus);
+
+			return E('div', {
+				'style': 'display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;'
+			}, [
+				E('span', {}, [ running ? _('Running') : _('Stopped') ]),
+				E('button', {
+					'class': 'btn cbi-button',
+					'click': ui.createHandlerFn(this, 'runAction', 'start'),
+					'disabled': running
+				}, [ _('Start') ]),
+				E('button', {
+					'class': 'btn cbi-button',
+					'click': ui.createHandlerFn(this, 'runAction', 'stop'),
+					'disabled': !running
+				}, [ _('Stop') ]),
+				E('button', {
+					'class': 'btn cbi-button',
+					'click': ui.createHandlerFn(this, 'runAction', 'restart'),
+					'disabled': !running
+				}, [ _('Restart') ]),
+				E('button', {
+					'class': 'btn cbi-button',
+					'click': ui.createHandlerFn(this, 'showLog')
+				}, [ _('View log') ])
+			]).outerHTML;
 		}, this);
-		o.description = _('Current service state.');
-
-		o = s.option(form.Button, '_start', _('Start'));
-		o.inputstyle = 'add';
-		o.onclick = ui.createHandlerFn(this, 'runAction', 'start');
-
-		o = s.option(form.Button, '_stop', _('Stop'));
-		o.inputstyle = 'remove';
-		o.onclick = ui.createHandlerFn(this, 'runAction', 'stop');
-
-		o = s.option(form.Button, '_restart', _('Restart'));
-		o.inputstyle = 'apply';
-		o.onclick = ui.createHandlerFn(this, 'runAction', 'restart');
-
-		o = s.option(form.Button, '_log', _('View log'));
-		o.inputstyle = 'action';
-		o.onclick = ui.createHandlerFn(this, 'showLog');
+		o.description = _('Current service state and controls.');
 
 		s = m.section(form.NamedSection, 'network', 'ha-device-tracker', _('Network'));
 
@@ -158,8 +168,6 @@ return view.extend({
 		o = s.option(form.Value, 'user', _('Person'));
 		o.rmempty = false;
 
-		return m.render().then(L.bind(function(mapNode) {
-			return mapNode;
-		}, this));
+		return m.render();
 	}
 });
