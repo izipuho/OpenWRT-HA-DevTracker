@@ -52,7 +52,6 @@ return view.extend({
 		running = this.getServiceRunning(serviceStatus);
 
 		this.statusNodes.service.textContent = running ? _('Running') : _('Stopped');
-		this.statusNodes.service.className = running ? 'label success' : 'label warning';
 
 		if (this.statusNodes.start)
 			this.statusNodes.start.disabled = running;
@@ -105,11 +104,11 @@ return view.extend({
 		});
 	},
 
-	renderStatusPanel: function(serviceStatus) {
+	renderActionSection: function(serviceStatus) {
 		var self = this;
 
 		this.statusNodes = {
-			service: E('span', { 'class': 'label' }, [ _('Unknown') ]),
+			service: E('span', {}, [ _('Unknown') ]),
 			start: E('button', {
 				'class': 'btn cbi-button',
 				'click': ui.createHandlerFn(this, 'runAction', 'start')
@@ -119,7 +118,7 @@ return view.extend({
 				'click': ui.createHandlerFn(this, 'runAction', 'stop')
 			}, [ _('Stop') ]),
 			restart: E('button', {
-				'class': 'btn cbi-button cbi-button-action',
+				'class': 'btn cbi-button',
 				'click': ui.createHandlerFn(this, 'runAction', 'restart')
 			}, [ _('Restart') ])
 		};
@@ -133,18 +132,12 @@ return view.extend({
 		});
 
 		return E('div', { 'class': 'cbi-section' }, [
-			E('div', {
-				'class': 'cbi-page-actions',
-				'style': 'display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin:0; padding:0;'
-			}, [
+			E('h3', {}, [ _('Actions') ]),
+			E('div', { 'class': 'cbi-value' }, [
+				E('label', { 'class': 'cbi-value-title' }, [ _('Service controls') ]),
 				E('div', {
+					'class': 'cbi-value-field',
 					'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;'
-				}, [
-					E('span', { 'style': 'color:#666;' }, [ _('Service') ]),
-					this.statusNodes.service
-				]),
-				E('div', {
-					'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;'
 				}, [
 					this.statusNodes.start,
 					this.statusNodes.stop,
@@ -161,6 +154,10 @@ return view.extend({
 	render: function(data) {
 		var m, s, o;
 		var serviceStatus = data ? data[1] : null;
+
+		this.statusNodes = {
+			service: E('span', {}, [ this.getServiceRunning(serviceStatus) ? _('Running') : _('Stopped') ])
+		};
 
 		m = new form.Map(
 			'ha-device-tracker',
@@ -180,6 +177,13 @@ return view.extend({
 		o.password = true;
 		o.rmempty = false;
 		o.description = _('Long-lived access token used to update device_tracker entities.');
+
+		o = s.option(form.DummyValue, '_service_status', _('Service status'));
+		o.rawhtml = true;
+		o.cfgvalue = L.bind(function() {
+			return this.statusNodes.service.outerHTML;
+		}, this);
+		o.description = _('Current runtime status of the tracker service.');
 
 		s = m.section(form.NamedSection, 'network', 'ha-device-tracker', _('Network'));
 
@@ -218,8 +222,8 @@ return view.extend({
 
 		return m.render().then(L.bind(function(mapNode) {
 			return E('div', {}, [
-				this.renderStatusPanel(serviceStatus),
-				mapNode
+				mapNode,
+				this.renderActionSection(serviceStatus)
 			]);
 		}, this));
 	}
