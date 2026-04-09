@@ -8,6 +8,7 @@
 - Real-time presence updates (no polling)
 - Runs on OpenWrt using `hostapd_cli -a`
 - UCI configuration (`/etc/config/ha-device-tracker`)
+- OpenWrt package recipe for SDK/buildroot
 - Simple fleet installer (`install/install.sh`) to deploy to many routers
 - Legacy cleanup script (`install/cleanup-legacy.sh`)
 - Updates HA via **REST**: `POST /api/states/<entity_id>` (with `Authorization: Bearer <token>`)
@@ -24,28 +25,54 @@
 - Address reachable from the router (e.g., `http://homeassistant.local:8123`)
 - A user **Long-Lived Access Token** (Profile → Long-Lived Tokens)
 
-**On the deployment machine (for `install/install.sh`):**
+**On the build/deployment machine:**
+- Debian or another Linux environment recommended for OpenWrt SDK/buildroot
 - `bash`, `ssh`, `scp` with network access to the routers
 
 ## Repository layout
 
 ```
-ha-device-tracker           # action hook (gets copied to /etc/ha-device-tracker)
-init.d/
-  └─ ha-device-tracker      # init.d service (to /etc/init.d/ha-device-tracker)
-config/
-  ├─ ha-device-tracker         # base UCI config template
-  ├─ ha-device-tracker.site1   # UCI configs per site
-  └─ ha-device-tracker.site2
+ha-device-tracker/
+  ├─ Makefile                       # OpenWrt package recipe
+  ├─ files/
+  │  └─ etc/
+  │     ├─ ha-device-tracker        # action hook
+  │     ├─ init.d/
+  │     │  └─ ha-device-tracker     # init.d service
+  │     └─ config/
+  │        └─ ha-device-tracker     # base UCI config template
+  └─ config/
+     ├─ ha-device-tracker.izsky     # site configs
+     ├─ ha-device-tracker.oasis
+     ├─ ha-device-tracker.lory
+     └─ ha-device-tracker.nika
 install/
   ├─ install.sh             # rollout to groups → IPs
   ├─ cleanup-legacy.sh      # remove old hostapd_action deployment
   └─ destinations           # site → list of IP addresses
 ```
 
+## Build package
+
+The project is now structured as an OpenWrt package directory that can be used
+from an OpenWrt SDK/buildroot as a local feed package.
+
+The package recipe is:
+
+- `ha-device-tracker/Makefile`
+
+The package payload is:
+
+- `ha-device-tracker/files/etc/ha-device-tracker`
+- `ha-device-tracker/files/etc/init.d/ha-device-tracker`
+- `ha-device-tracker/files/etc/config/ha-device-tracker`
+
+Build the package with OpenWrt tooling on a Debian/Linux machine, then place
+the resulting `.ipk` into `dist/`.
+
 ## Installation & rollout
 
-1) Prepare the **UCI config** for your site in `config/ha-device-tracker.<site>`.
+1) Prepare the **UCI config** for your site in `ha-device-tracker/config/ha-device-tracker.<site>`.
 
 Minimal example:
 
@@ -85,13 +112,17 @@ cd install
 
 # Deploy to a single group (e.g., izsky):
 ./install.sh izsky
+
+# Deploy to a single IP:
+./install.sh 10.8.25.4
 ```
 
 The installer performs for each IP in the selected group:
-- copies `../ha-device-tracker` → `/etc/` and sets `chmod +x`
-- copies `../init.d/ha-device-tracker` → `/etc/init.d/` and sets `chmod +x`
-- copies `../config/ha-device-tracker.<group>` → `/etc/config/ha-device-tracker`
-- enables and restarts the service: `/etc/init.d/ha-device-tracker enable && restart`
+- copies `cleanup-legacy.sh` to `/tmp/` and runs it
+- uploads the latest `ha-device-tracker_*.ipk` from `dist/`
+- installs the package via `opkg install`
+- copies `../ha-device-tracker/config/ha-device-tracker.<group>` → `/etc/config/ha-device-tracker`
+- restarts the service: `/etc/init.d/ha-device-tracker restart`
 
 ## Legacy cleanup
 
