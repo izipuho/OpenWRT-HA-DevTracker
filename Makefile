@@ -47,7 +47,8 @@ build:
 	grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
 	cd "$$sdk_root"; \
 	./scripts/feeds update -a; \
-	./scripts/feeds install -a; \
+	./scripts/feeds install curl; \
+	./scripts/feeds install $(PKG_NAME); \
 	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
 	$(MAKE) defconfig; \
 	$(MAKE) package/$(PKG_NAME)/compile V=s; \
