@@ -27,7 +27,7 @@ while IFS= read -r place; do
 		ssh -n "$ip" "sh /tmp/cleanup-legacy.sh"
 		scp -O "$package" "$ip:/tmp/"
 		ssh -n "$ip" "opkg install /tmp/$(basename "$package")"
-		scp -O "../config/ha-device-tracker.$name" "$ip:/etc/config/ha-device-tracker"
+		scp -O "../ha-device-tracker/config/ha-device-tracker.$name" "$ip:/etc/config/ha-device-tracker"
 		ssh -n "$ip" "/etc/init.d/ha-device-tracker restart"
 
 		echo " "

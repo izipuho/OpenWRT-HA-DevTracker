@@ -38,7 +38,6 @@ set_device_init_presence(){
         do
                 matches_tracked_iface "$iface" || continue
 
-                #echo $(hostapd_cli -i $iface sta $mac)
                 if [ "$(hostapd_cli -i $iface sta $mac | head -n 1)" != "FAIL" ]
                 then
                         echo "   true"

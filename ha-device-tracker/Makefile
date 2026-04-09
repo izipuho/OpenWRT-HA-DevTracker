@@ -47,9 +47,9 @@ define Package/ha-device-tracker/install
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(CURDIR)/../../ha-device-tracker $(1)/etc/ha-device-tracker
-	$(INSTALL_BIN) $(CURDIR)/../../init.d/ha-device-tracker $(1)/etc/init.d/ha-device-tracker
-	$(INSTALL_CONF) $(CURDIR)/../../config/ha-device-tracker $(1)/etc/config/ha-device-tracker
+	$(INSTALL_BIN) $(CURDIR)/files/etc/ha-device-tracker $(1)/etc/ha-device-tracker
+	$(INSTALL_BIN) $(CURDIR)/files/etc/init.d/ha-device-tracker $(1)/etc/init.d/ha-device-tracker
+	$(INSTALL_CONF) $(CURDIR)/files/etc/config/ha-device-tracker $(1)/etc/config/ha-device-tracker
 endef
 
 $(eval $(call BuildPackage,ha-device-tracker))

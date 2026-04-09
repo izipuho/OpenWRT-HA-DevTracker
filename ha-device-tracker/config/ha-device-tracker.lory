@@ -1,0 +1,22 @@
+config hostapd_action ha
+	option token 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJiZGRhNDNmNDg3ZDg0MTg3YTk5Mzc1NDg5YmMwZjU5NyIsImlhdCI6MTcyNDg0NjIxMCwiZXhwIjoyMDQwMjA2MjEwfQ.yDzFztUhjNCvrv1gyV7ql-G15cpgNR7EORMXKDEY8r8'
+	option url 'http://10.8.27.110:8123'
+
+config hostapd_action network
+	option host_prefix 'IZLQ-'
+
+config device 'IZipuho_iPhone'
+	option mac '18:fa:b7:3a:f6:21'
+	option user 'zip'
+
+config device 'Nika_iPhone'
+	option mac '74:42:18:86:32:90'
+	option user 'nika'
+
+config device 'Sveta_iPhone'
+	option mac '9c:92:4f:5d:6a:5f'
+	option user sveta
+
+config device 'ZVV_iPhoneBig'
+	option mac 'bc:09:63:1d:88:9c'
+	option user zvv

@@ -1,0 +1,22 @@
+config hostapd_action ha
+	option token 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzODY0ZDBiYmU0ZDQ0N2VkOTgyYWFkOTA5MDY0MjNkNiIsImlhdCI6MTcyNTAyOTAxNywiZXhwIjoyMDQwMzg5MDE3fQ.lamOazGGlMBmyw5aEISJMworryHpa44KqmBbIIJV7i4'
+	option url 'http://10.8.26.5:8123'
+
+config hostapd_action network
+	option host_prefix 'ZVV-'
+
+config device 'IZipuho_iPhone'
+	option mac '18:fa:b7:3a:f6:21'
+	option user zip
+
+config device 'Sveta_iPhone'
+	option mac '9c:92:4f:5d:6a:5f' 
+	option user sveta
+
+config device 'ZVV_iPhoneBig'
+	option mac '26:2e:39:27:58:47'
+	option user zvv
+
+config device 'Evgenia_iPhone'
+	option mac '68:db:ca:03:aa:45' 
+	option user sveta
