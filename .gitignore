@@ -1,7 +1,7 @@
 
 *.swp
-config/hostapd_action.*
 install/test*
 install/destinations.*
+install/ha-device-tracker.*
 .DS_Store
 build
