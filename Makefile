@@ -66,7 +66,7 @@ build-one:
 	if [ ! -d "$$sdk_root" ]; then \
 		archive_path="$$build_dir/$$sdk_file"; \
 		curl -fL -o "$$archive_path" "$$base_url/$$sdk_file"; \
-		rm -rf "$$build_dir"/openwrt-sdk-*; \
+		find "$$build_dir" -maxdepth 1 -type d -name 'openwrt-sdk-*' -exec rm -rf {} +; \
 		tar --zstd -xf "$$archive_path" -C "$$build_dir"; \
 		extracted_sdk=$$(find "$$build_dir" -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1); \
 		if [ -z "$$extracted_sdk" ]; then \

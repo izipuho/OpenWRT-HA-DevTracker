@@ -277,9 +277,11 @@ return view.extend({
 
 		return m.render().then(L.bind(function(mapNode) {
 			var serviceField = mapNode.querySelector('[data-name="_service"] .cbi-value-field');
-			var ifacePatternField = mapNode.querySelector('[data-name="iface_pattern"][data-field]');
-			var ifacePatternWidget = ifacePatternField ? ifacePatternField.querySelector('[id^="cbid."]') : null;
-			var ifacePatternInput = mapNode.querySelector('[data-name="iface_pattern"] input');
+			var ifacePatternOpt = m.lookupOption('iface_pattern', 'network')[0];
+			var ifacePatternWidget = ifacePatternOpt ? ifacePatternOpt.getUIElement('network') : null;
+			var ifacePatternInput = ifacePatternWidget && ifacePatternWidget.node
+				? ifacePatternWidget.node.querySelector('input')
+				: null;
 
 			if (serviceField) {
 				serviceField.innerHTML = '';
@@ -287,10 +289,8 @@ return view.extend({
 			}
 
 			if (ifacePatternWidget && ifacePatternInput) {
-				ifacePatternInput.addEventListener('input', function() {
-					ifacePatternWidget.setAttribute('data-changed', 'true');
-					ifacePatternWidget.dispatchEvent(new CustomEvent('widget-change', { bubbles: true }));
-				});
+				ifacePatternWidget.setUpdateEvents(ifacePatternInput, 'input');
+				ifacePatternWidget.setChangeEvents(ifacePatternInput, 'input');
 			}
 
 			return mapNode;
