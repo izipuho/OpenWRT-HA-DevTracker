@@ -60,11 +60,15 @@ build-one:
 		exit 1; \
 	fi; \
 	feeds_conf="$$sdk_root/feeds.conf"; \
+	feeds_conf_default="$$sdk_root/feeds.conf.default"; \
+	if [ ! -s "$$feeds_conf" ] && [ -f "$$feeds_conf_default" ]; then \
+		cp "$$feeds_conf_default" "$$feeds_conf"; \
+	fi; \
 	grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
 	cd "$$sdk_root"; \
 	./scripts/feeds update -a; \
-	./scripts/feeds install curl; \
-	./scripts/feeds install luci-base; \
+	./scripts/feeds install -p packages curl; \
+	./scripts/feeds install -p luci luci-base; \
 	./scripts/feeds install $(PKG_NAME); \
 	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
 	grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
