@@ -1,8 +1,8 @@
-config hostapd_action ha
+config ha-device-tracker ha
 	option token 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI1MGQ2MGI5MWJmMzc0OGMyODRkY2JmNGEyMDZiMjRlYSIsImlhdCI6MTcyNDkyNDk2MCwiZXhwIjoyMDQwMjg0OTYwfQ.1NsMaJQsmAn2b-tEn9EhTTzgViNgZrPKMX0RDMhOtIs'
 	option url 'http://10.8.28.101:8123'
 
-config hostapd_action network
+config ha-device-tracker network
 	option host_prefix 'Nika-WiFi-'
 
 config device 'IZipuho_iPhone'

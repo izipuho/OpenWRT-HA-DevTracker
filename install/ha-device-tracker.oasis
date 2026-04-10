@@ -1,8 +1,8 @@
-config hostapd_action ha
+config ha-device-tracker ha
 	option token 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzODY0ZDBiYmU0ZDQ0N2VkOTgyYWFkOTA5MDY0MjNkNiIsImlhdCI6MTcyNTAyOTAxNywiZXhwIjoyMDQwMzg5MDE3fQ.lamOazGGlMBmyw5aEISJMworryHpa44KqmBbIIJV7i4'
 	option url 'http://10.8.26.5:8123'
 
-config hostapd_action network
+config ha-device-tracker network
 	option host_prefix 'ZVV-'
 
 config device 'IZipuho_iPhone'

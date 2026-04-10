@@ -1,8 +1,8 @@
-config hostapd_action ha
+config ha-device-tracker ha
 	option token 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlODNjZWE3YmEyMWM0NjA0YmNlNGFjODRkYzcxN2M4ZCIsImlhdCI6MTcyNDc1MDU2MCwiZXhwIjoyMDQwMTEwNTYwfQ.fnSkQk60RK9PSOAeIBU-8uJ3rGfydC-BfEZZxtnaS5M'
 	option url 'http://10.8.25.110:8123'
 
-config hostapd_action network
+config ha-device-tracker network
 	option host_prefix 'IZSky-'
 
 config device 'IZipuho_iPhone'
