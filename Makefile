@@ -65,22 +65,19 @@ build-one:
 		feeds_conf_default="$$sdk_root/feeds.conf.default"; \
 		: > "$$feeds_conf"; \
 		if [ -f "$$feeds_conf_default" ]; then \
-			grep -E '^[[:space:]]*src-git[[:space:]]+base[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
 			grep -E '^[[:space:]]*src-git[[:space:]]+packages[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
 			grep -E '^[[:space:]]*src-git[[:space:]]+luci[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
 		fi; \
 		grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
 		cd "$$sdk_root"; \
-		./scripts/feeds update -a; \
+		./scripts/feeds update packages; \
+		./scripts/feeds update luci; \
+		./scripts/feeds update $(FEED_NAME); \
 		./scripts/feeds install -p $(FEED_NAME) $(PKG_NAME); \
 		./scripts/feeds install -p $(FEED_NAME) luci-app-$(PKG_NAME); \
-		$(MAKE) defconfig; \
-		sed -i '/^CONFIG_PACKAGE_/d' .config; \
-		sed -i '/^# CONFIG_PACKAGE_.* is not set/d' .config; \
 		grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
 		grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
 		sed -i '/^CONFIG_ALL=/d' .config; \
-		sed -i '/^# CONFIG_ALL is not set/d' .config; \
 		printf '# CONFIG_ALL is not set\n' >> .config; \
 		$(MAKE) defconfig; \
 	$(MAKE) package/$(PKG_NAME)/compile V=s; \
