@@ -1,12 +1,14 @@
 TARGET ?= ath79
 SUBTARGET ?= generic
 RELEASES ?=
+REFRESH_SDK ?= no
 
 include $(CURDIR)/version.mk
 
 PKG_NAME := ha-device-tracker
 FEED_NAME := local
 LEAVE_BUILD ?= no
+CACHE_DIR ?= $(CURDIR)/build/sdk-cache
 
 .PHONY: build build-one
 
@@ -23,7 +25,7 @@ build:
 	fi; \
 	for release in $$releases; do \
 		echo "==> Building $(PKG_NAME) for OpenWrt $$release"; \
-		$(MAKE) build-one RELEASE="$$release" TARGET="$(TARGET)" SUBTARGET="$(SUBTARGET)" LEAVE_BUILD="$(LEAVE_BUILD)" SDK_FILE="$(SDK_FILE)"; \
+		$(MAKE) build-one RELEASE="$$release" TARGET="$(TARGET)" SUBTARGET="$(SUBTARGET)" LEAVE_BUILD="$(LEAVE_BUILD)" REFRESH_SDK="$(REFRESH_SDK)" SDK_FILE="$(SDK_FILE)"; \
 	done
 
 build-one:
@@ -33,11 +35,14 @@ build-one:
 		echo "Example: make build-one RELEASE=24.10.5 TARGET=ath79 SUBTARGET=generic" >&2; \
 		exit 1; \
 	fi; \
-	build_dir=$$(mktemp -d /tmp/ha-device-tracker-sdk-XXXXX); \
+	cache_root="$(CACHE_DIR)/$(RELEASE)-$(TARGET)-$(SUBTARGET)"; \
+	build_dir="$$cache_root/work"; \
+	sdk_root="$$build_dir/sdk"; \
+	prepared_marker="$$sdk_root/.ha-device-tracker-sdk-prepared"; \
 	cleanup() { \
-		if [ "$(LEAVE_BUILD)" != "yes" ]; then \
+		if [ "$(LEAVE_BUILD)" != "yes" ] && [ "$(REFRESH_SDK)" = "yes" ]; then \
 			rm -rf "$$build_dir"; \
-		else \
+		elif [ "$(LEAVE_BUILD)" = "yes" ]; then \
 			echo "Build directory kept at $$build_dir"; \
 		fi; \
 	}; \
@@ -53,14 +58,25 @@ build-one:
 		exit 1; \
 	fi; \
 	mkdir -p "$$dist_dir"; \
-	cd "$$build_dir"; \
-	curl -fL -O "$$base_url/$$sdk_file"; \
-	tar --zstd -xf "$$sdk_file"; \
-	sdk_root=$$(find "$$build_dir" -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1); \
-	if [ -z "$$sdk_root" ]; then \
-		echo "SDK extraction failed in $$build_dir" >&2; \
-		exit 1; \
+	mkdir -p "$$build_dir"; \
+	if [ "$(REFRESH_SDK)" = "yes" ]; then \
+		rm -rf "$$sdk_root"; \
+		rm -f "$$prepared_marker"; \
 	fi; \
+	if [ ! -d "$$sdk_root" ]; then \
+		archive_path="$$build_dir/$$sdk_file"; \
+		curl -fL -o "$$archive_path" "$$base_url/$$sdk_file"; \
+		rm -rf "$$build_dir"/openwrt-sdk-*; \
+		tar --zstd -xf "$$archive_path" -C "$$build_dir"; \
+		extracted_sdk=$$(find "$$build_dir" -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1); \
+		if [ -z "$$extracted_sdk" ]; then \
+			echo "SDK extraction failed in $$build_dir" >&2; \
+			exit 1; \
+		fi; \
+		rm -rf "$$sdk_root"; \
+		mv "$$extracted_sdk" "$$sdk_root"; \
+	fi; \
+	if [ ! -f "$$prepared_marker" ]; then \
 		feeds_conf="$$sdk_root/feeds.conf"; \
 		feeds_conf_default="$$sdk_root/feeds.conf.default"; \
 		if [ ! -s "$$feeds_conf" ] && [ -f "$$feeds_conf_default" ]; then \
@@ -72,11 +88,14 @@ build-one:
 		./scripts/feeds install -p packages curl; \
 		./scripts/feeds install -p luci luci-base; \
 		./scripts/feeds install $(PKG_NAME); \
-		grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
-		grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
-		sed -i '/^CONFIG_ALL=/d' .config; \
-		printf '# CONFIG_ALL is not set\n' >> .config; \
-		$(MAKE) defconfig; \
+		touch "$$prepared_marker"; \
+	fi; \
+	cd "$$sdk_root"; \
+	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
+	grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
+	sed -i '/^CONFIG_ALL=/d' .config; \
+	printf '# CONFIG_ALL is not set\n' >> .config; \
+	$(MAKE) defconfig; \
 	$(MAKE) package/$(PKG_NAME)/compile V=s; \
 	case "$(RELEASE)" in \
 		24.*) pkg_ext=ipk ;; \
