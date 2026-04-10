@@ -61,7 +61,7 @@ return view.extend({
 
 		return this.loadServiceStatus().then(function(serviceStatus) {
 			if (self.getServiceRunning(serviceStatus) === expectedRunning || attempts <= 1)
-				return serviceStatus;
+				return (self.getServiceRunning(serviceStatus) === expectedRunning) ? serviceStatus : null;
 
 			return self.delay(delayMs).then(function() {
 				return self.pollServiceStatus(expectedRunning, attempts - 1, delayMs);
@@ -104,8 +104,12 @@ return view.extend({
 			if (res.code !== 0)
 				throw new Error(res.stderr || _('Command failed'));
 
+			self.updateServiceControls({ running: expectedRunning });
+
 			return self.pollServiceStatus(expectedRunning, 8, 250).then(function(serviceStatus) {
-				self.updateServiceControls(serviceStatus);
+				if (serviceStatus)
+					self.updateServiceControls(serviceStatus);
+
 				ui.addNotification(null, E('p', {}, messages[action] || _('Action completed successfully.')));
 			});
 		}).catch(function(err) {
@@ -273,6 +277,8 @@ return view.extend({
 
 		return m.render().then(L.bind(function(mapNode) {
 			var serviceField = mapNode.querySelector('[data-name="_service"] .cbi-value-field');
+			var ifacePatternField = mapNode.querySelector('[data-name="iface_pattern"][data-field]');
+			var ifacePatternWidget = ifacePatternField ? ifacePatternField.querySelector('[id^="cbid."]') : null;
 			var ifacePatternInput = mapNode.querySelector('[data-name="iface_pattern"] input');
 
 			if (serviceField) {
@@ -280,9 +286,10 @@ return view.extend({
 				serviceField.appendChild(this.renderServiceRow(running));
 			}
 
-			if (ifacePatternInput) {
+			if (ifacePatternWidget && ifacePatternInput) {
 				ifacePatternInput.addEventListener('input', function() {
-					this.dispatchEvent(new Event('change', { bubbles: true }));
+					ifacePatternWidget.setAttribute('data-changed', 'true');
+					ifacePatternWidget.dispatchEvent(new CustomEvent('widget-change', { bubbles: true }));
 				});
 			}
 
