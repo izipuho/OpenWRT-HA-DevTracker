@@ -61,25 +61,28 @@ build-one:
 		echo "SDK extraction failed in $$build_dir" >&2; \
 		exit 1; \
 	fi; \
-	feeds_conf="$$sdk_root/feeds.conf"; \
-	feeds_conf_default="$$sdk_root/feeds.conf.default"; \
-	: > "$$feeds_conf"; \
-	if [ -f "$$feeds_conf_default" ]; then \
-		grep -E '^[[:space:]]*src-git[[:space:]]+packages[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
-		grep -E '^[[:space:]]*src-git[[:space:]]+luci[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
-	fi; \
-	grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
-	cd "$$sdk_root"; \
-	./scripts/feeds update packages; \
-	./scripts/feeds update luci; \
-	./scripts/feeds update $(FEED_NAME); \
-	./scripts/feeds install -p $(FEED_NAME) $(PKG_NAME); \
-	./scripts/feeds install -p $(FEED_NAME) luci-app-$(PKG_NAME); \
-	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
-	grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
-	sed -i '/^CONFIG_ALL=/d' .config; \
-	printf '# CONFIG_ALL is not set\n' >> .config; \
-	$(MAKE) defconfig; \
+		feeds_conf="$$sdk_root/feeds.conf"; \
+		feeds_conf_default="$$sdk_root/feeds.conf.default"; \
+		if [ -f "$$feeds_conf_default" ]; then \
+			cp "$$feeds_conf_default" "$$feeds_conf"; \
+		else \
+			: > "$$feeds_conf"; \
+		fi; \
+		grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
+		cd "$$sdk_root"; \
+		./scripts/feeds update packages; \
+		./scripts/feeds update luci; \
+		./scripts/feeds update $(FEED_NAME); \
+		./scripts/feeds install -p $(FEED_NAME) $(PKG_NAME); \
+		./scripts/feeds install -p $(FEED_NAME) luci-app-$(PKG_NAME); \
+		sed -i '/^CONFIG_PACKAGE_/d' .config; \
+		sed -i '/^# CONFIG_PACKAGE_.* is not set/d' .config; \
+		grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
+		grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
+		sed -i '/^CONFIG_ALL=/d' .config; \
+		sed -i '/^# CONFIG_ALL is not set/d' .config; \
+		printf '# CONFIG_ALL is not set\n' >> .config; \
+		$(MAKE) defconfig; \
 	$(MAKE) package/$(PKG_NAME)/compile V=s; \
 	case "$(RELEASE)" in \
 		24.*) pkg_ext=ipk ;; \
