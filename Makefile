@@ -61,15 +61,19 @@ build-one:
 	fi; \
 	feeds_conf="$$sdk_root/feeds.conf"; \
 	feeds_conf_default="$$sdk_root/feeds.conf.default"; \
-	if [ ! -s "$$feeds_conf" ] && [ -f "$$feeds_conf_default" ]; then \
-		cp "$$feeds_conf_default" "$$feeds_conf"; \
+	: > "$$feeds_conf"; \
+	if [ -f "$$feeds_conf_default" ]; then \
+		grep -E '^[[:space:]]*src-git[[:space:]]+packages[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
+		grep -E '^[[:space:]]*src-git[[:space:]]+luci[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
 	fi; \
 	grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
 	cd "$$sdk_root"; \
-	./scripts/feeds update -a; \
+	./scripts/feeds update packages; \
+	./scripts/feeds update luci; \
+	./scripts/feeds update $(FEED_NAME); \
 	./scripts/feeds install -p packages curl; \
 	./scripts/feeds install -p luci luci-base; \
-	./scripts/feeds install $(PKG_NAME); \
+	./scripts/feeds install -p $(FEED_NAME) $(PKG_NAME); \
 	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
 	grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
 	$(MAKE) defconfig; \

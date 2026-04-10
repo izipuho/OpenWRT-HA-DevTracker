@@ -5,7 +5,7 @@ Before calling this `v1`, run the following checks:
 - [x] 1. End-to-end happy path on a real router.
    Install the package, open LuCI, save the config, start the service, and confirm that presence updates appear in Home Assistant.
 
-- [ ] 2. Negative scenarios.
+- [x] 2. Negative scenarios.
    Verify behavior for an empty `room`, invalid `token` or `url`, and no matching Wi-Fi interfaces.
 
 - [ ] 3. LuCI service state.
