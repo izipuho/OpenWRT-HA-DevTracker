@@ -2,6 +2,8 @@ TARGET ?= ath79
 SUBTARGET ?= generic
 RELEASES ?=
 
+include $(CURDIR)/version.mk
+
 PKG_NAME := ha-device-tracker
 FEED_NAME := local
 LEAVE_BUILD ?= no
@@ -71,10 +73,12 @@ build-one:
 	./scripts/feeds update packages; \
 	./scripts/feeds update luci; \
 	./scripts/feeds update $(FEED_NAME); \
-	./scripts/feeds install -d y -p $(FEED_NAME) $(PKG_NAME); \
-	./scripts/feeds install -d y -p $(FEED_NAME) luci-app-$(PKG_NAME); \
+	./scripts/feeds install -p $(FEED_NAME) $(PKG_NAME); \
+	./scripts/feeds install -p $(FEED_NAME) luci-app-$(PKG_NAME); \
 	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
 	grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
+	sed -i '/^CONFIG_ALL=/d' .config; \
+	printf '# CONFIG_ALL is not set\n' >> .config; \
 	$(MAKE) defconfig; \
 	$(MAKE) package/$(PKG_NAME)/compile V=s; \
 	case "$(RELEASE)" in \
