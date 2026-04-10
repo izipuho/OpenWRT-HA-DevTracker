@@ -32,7 +32,7 @@ while IFS= read -r place; do
 			scp -O "$luci_package" "$ip:/tmp/"
 			ssh -n "$ip" "opkg install /tmp/$(basename "$luci_package")"
 		fi
-		scp -O "../ha-device-tracker/config/ha-device-tracker.$name" "$ip:/etc/config/ha-device-tracker"
+		scp -O "./ha-device-tracker.$name" "$ip:/etc/config/ha-device-tracker"
 		ssh -n "$ip" "/etc/init.d/ha-device-tracker restart"
 
 		echo " "

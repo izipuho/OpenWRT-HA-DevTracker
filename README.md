@@ -41,15 +41,14 @@ ha-device-tracker/
   │     │  └─ ha-device-tracker     # init.d service
   │     └─ config/
   │        └─ ha-device-tracker     # base UCI config template
-  └─ config/
-     ├─ ha-device-tracker.izsky     # site configs
-     ├─ ha-device-tracker.oasis
-     ├─ ha-device-tracker.lory
-     └─ ha-device-tracker.nika
 install/
   ├─ install.sh             # rollout to groups → IPs
   ├─ cleanup-legacy.sh      # remove old hostapd_action deployment
   └─ destinations           # site → list of IP addresses
+  ├─ ha-device-tracker.izsky # site configs
+  ├─ ha-device-tracker.oasis
+  ├─ ha-device-tracker.lory
+  └─ ha-device-tracker.nika
 ```
 
 ## Build package
@@ -109,7 +108,7 @@ package-manager generation.
 
 ## Installation & rollout
 
-1) Prepare the **UCI config** for your site in `ha-device-tracker/config/ha-device-tracker.<site>`.
+1) Prepare the **UCI config** for your site in `install/ha-device-tracker.<site>`.
 
 Minimal example:
 
@@ -158,7 +157,7 @@ The installer performs for each IP in the selected group:
 - copies `cleanup-legacy.sh` to `/tmp/` and runs it
 - uploads the latest `ha-device-tracker_*.ipk` from `dist/`
 - installs the package via `opkg install`
-- copies `../ha-device-tracker/config/ha-device-tracker.<group>` → `/etc/config/ha-device-tracker`
+- copies `./ha-device-tracker.<group>` → `/etc/config/ha-device-tracker`
 - restarts the service: `/etc/init.d/ha-device-tracker restart`
 
 Typical flow:
