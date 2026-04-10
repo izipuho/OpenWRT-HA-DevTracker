@@ -70,11 +70,10 @@ build-one:
 		fi; \
 		grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
 		cd "$$sdk_root"; \
-		./scripts/feeds update packages; \
-		./scripts/feeds update luci; \
-		./scripts/feeds update $(FEED_NAME); \
+		./scripts/feeds update -a; \
 		./scripts/feeds install -p $(FEED_NAME) $(PKG_NAME); \
 		./scripts/feeds install -p $(FEED_NAME) luci-app-$(PKG_NAME); \
+		$(MAKE) defconfig; \
 		sed -i '/^CONFIG_PACKAGE_/d' .config; \
 		sed -i '/^# CONFIG_PACKAGE_.* is not set/d' .config; \
 		grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
