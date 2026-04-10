@@ -50,6 +50,25 @@ return view.extend({
 		return false;
 	},
 
+	delay: function(ms) {
+		return new Promise(function(resolve) {
+			window.setTimeout(resolve, ms);
+		});
+	},
+
+	pollServiceStatus: function(expectedRunning, attempts, delayMs) {
+		var self = this;
+
+		return this.loadServiceStatus().then(function(serviceStatus) {
+			if (self.getServiceRunning(serviceStatus) === expectedRunning || attempts <= 1)
+				return serviceStatus;
+
+			return self.delay(delayMs).then(function() {
+				return self.pollServiceStatus(expectedRunning, attempts - 1, delayMs);
+			});
+		});
+	},
+
 	updateServiceControls: function(serviceStatus) {
 		var running;
 
@@ -74,14 +93,20 @@ return view.extend({
 
 	runAction: function(action) {
 		var self = this;
+		var expectedRunning = (action !== 'stop');
+		var messages = {
+			start: _('Service started.'),
+			stop: _('Service stopped.'),
+			restart: _('Service restarted.')
+		};
 
 		return fs.exec('/etc/init.d/ha-device-tracker', [ action ]).then(function(res) {
 			if (res.code !== 0)
 				throw new Error(res.stderr || _('Command failed'));
 
-			return self.loadServiceStatus().then(function(serviceStatus) {
+			return self.pollServiceStatus(expectedRunning, 8, 250).then(function(serviceStatus) {
 				self.updateServiceControls(serviceStatus);
-				ui.addNotification(null, E('p', {}, _('Action completed successfully.')));
+				ui.addNotification(null, E('p', {}, messages[action] || _('Action completed successfully.')));
 			});
 		}).catch(function(err) {
 			ui.addNotification(null, E('p', {}, _('Action failed: %s').format(err.message || err)));
@@ -248,10 +273,17 @@ return view.extend({
 
 		return m.render().then(L.bind(function(mapNode) {
 			var serviceField = mapNode.querySelector('[data-name="_service"] .cbi-value-field');
+			var ifacePatternInput = mapNode.querySelector('[data-name="iface_pattern"] input');
 
 			if (serviceField) {
 				serviceField.innerHTML = '';
 				serviceField.appendChild(this.renderServiceRow(running));
+			}
+
+			if (ifacePatternInput) {
+				ifacePatternInput.addEventListener('input', function() {
+					this.dispatchEvent(new Event('change', { bubbles: true }));
+				});
 			}
 
 			return mapNode;
