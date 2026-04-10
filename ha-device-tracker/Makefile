@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ha-device-tracker
 PKG_VERSION:=0.2.10
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=Proprietary
 PKG_MAINTAINER:=izipuho

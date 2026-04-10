@@ -71,9 +71,8 @@ build-one:
 	./scripts/feeds update packages; \
 	./scripts/feeds update luci; \
 	./scripts/feeds update $(FEED_NAME); \
-	./scripts/feeds install -p packages curl; \
-	./scripts/feeds install -p luci luci-base; \
 	./scripts/feeds install -p $(FEED_NAME) $(PKG_NAME); \
+	./scripts/feeds install -p $(FEED_NAME) luci-app-$(PKG_NAME); \
 	grep -q '^CONFIG_PACKAGE_$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_$(PKG_NAME)=m' >> .config; \
 	grep -q '^CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m$$' .config 2>/dev/null || echo 'CONFIG_PACKAGE_luci-app-$(PKG_NAME)=m' >> .config; \
 	$(MAKE) defconfig; \
