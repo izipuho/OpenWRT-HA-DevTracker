@@ -63,10 +63,11 @@ build-one:
 	fi; \
 		feeds_conf="$$sdk_root/feeds.conf"; \
 		feeds_conf_default="$$sdk_root/feeds.conf.default"; \
+		: > "$$feeds_conf"; \
 		if [ -f "$$feeds_conf_default" ]; then \
-			cp "$$feeds_conf_default" "$$feeds_conf"; \
-		else \
-			: > "$$feeds_conf"; \
+			grep -E '^[[:space:]]*src-git[[:space:]]+base[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
+			grep -E '^[[:space:]]*src-git[[:space:]]+packages[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
+			grep -E '^[[:space:]]*src-git[[:space:]]+luci[[:space:]]' "$$feeds_conf_default" >> "$$feeds_conf" || true; \
 		fi; \
 		grep -q '^src-link $(FEED_NAME) $(CURDIR)$$' "$$feeds_conf" || echo "src-link $(FEED_NAME) $(CURDIR)" >> "$$feeds_conf"; \
 		cd "$$sdk_root"; \
