@@ -2,7 +2,7 @@
 
 Before calling this `v1`, run the following checks:
 
-- [ ] 1. End-to-end happy path on a real router.
+- [x] 1. End-to-end happy path on a real router.
    Install the package, open LuCI, save the config, start the service, and confirm that presence updates appear in Home Assistant.
 
 - [ ] 2. Negative scenarios.
@@ -17,7 +17,7 @@ Before calling this `v1`, run the following checks:
 - [ ] 5. UI acceptance.
    Confirm that the current LuCI labels, layout, and tracked-devices table are acceptable for `v1`.
 
-- [ ] 6. Startup output and logging.
+- [x] 6. Startup output and logging.
    Confirm that startup stdout is acceptable and that syslog contains enough information for troubleshooting.
 
 - [ ] 7. Release artifact validation.

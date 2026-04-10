@@ -50,12 +50,39 @@ return view.extend({
 		return false;
 	},
 
+	updateServiceControls: function(serviceStatus) {
+		var running;
+
+		if (!this.serviceNodes)
+			return;
+
+		running = this.getServiceRunning(serviceStatus);
+
+		this.serviceNodes.status.textContent = running ? _('Running') : _('Stopped');
+
+		if (running) {
+			this.serviceNodes.start.setAttribute('disabled', 'disabled');
+			this.serviceNodes.stop.removeAttribute('disabled');
+			this.serviceNodes.restart.removeAttribute('disabled');
+		}
+		else {
+			this.serviceNodes.start.removeAttribute('disabled');
+			this.serviceNodes.stop.setAttribute('disabled', 'disabled');
+			this.serviceNodes.restart.setAttribute('disabled', 'disabled');
+		}
+	},
+
 	runAction: function(action) {
+		var self = this;
+
 		return fs.exec('/etc/init.d/ha-device-tracker', [ action ]).then(function(res) {
 			if (res.code !== 0)
 				throw new Error(res.stderr || _('Command failed'));
 
-			ui.addNotification(null, E('p', {}, _('Action completed successfully.')));
+			return self.loadServiceStatus().then(function(serviceStatus) {
+				self.updateServiceControls(serviceStatus);
+				ui.addNotification(null, E('p', {}, _('Action completed successfully.')));
+			});
 		}).catch(function(err) {
 			ui.addNotification(null, E('p', {}, _('Action failed: %s').format(err.message || err)));
 		});
@@ -87,18 +114,23 @@ return view.extend({
 	},
 
 	renderServiceRow: function(running) {
+		var statusNode = E('span', {}, [ running ? _('Running') : _('Stopped') ]);
 		var startAttrs = {
 			'class': 'btn cbi-button cbi-button-add',
-			'click': ui.createHandlerFn(this, 'runAction', 'start')
+			'click': ui.createHandlerFn(this, 'runAction', 'start'),
+			'type': 'button'
 		};
 		var stopAttrs = {
 			'class': 'btn cbi-button cbi-button-remove',
-			'click': ui.createHandlerFn(this, 'runAction', 'stop')
+			'click': ui.createHandlerFn(this, 'runAction', 'stop'),
+			'type': 'button'
 		};
 		var restartAttrs = {
 			'class': 'btn cbi-button cbi-button-apply',
-			'click': ui.createHandlerFn(this, 'runAction', 'restart')
+			'click': ui.createHandlerFn(this, 'runAction', 'restart'),
+			'type': 'button'
 		};
+		var startNode, stopNode, restartNode, row;
 
 		if (running)
 			startAttrs.disabled = 'disabled';
@@ -107,26 +139,36 @@ return view.extend({
 			restartAttrs.disabled = 'disabled';
 		}
 
-		return E('div', {
+		row = E('div', {
 			'style': 'display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; width:100%;'
 		}, [
 			E('div', {
 				'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;'
 			}, [
-				E('span', {}, [ running ? _('Running') : _('Stopped') ])
+				statusNode
 			]),
 			E('div', {
 				'style': 'display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;'
 			}, [
-				E('button', startAttrs, [ _('Start') ]),
-				E('button', stopAttrs, [ _('Stop') ]),
-				E('button', restartAttrs, [ _('Restart') ]),
+				(startNode = E('button', startAttrs, [ _('Start') ])),
+				(stopNode = E('button', stopAttrs, [ _('Stop') ])),
+				(restartNode = E('button', restartAttrs, [ _('Restart') ])),
 				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
-					'click': ui.createHandlerFn(this, 'showLog')
+					'click': ui.createHandlerFn(this, 'showLog'),
+					'type': 'button'
 				}, [ _('View log') ])
 			])
 		]);
+
+		this.serviceNodes = {
+			status: statusNode,
+			start: startNode,
+			stop: stopNode,
+			restart: restartNode
+		};
+
+		return row;
 	},
 
 	render: function(data) {
@@ -166,19 +208,29 @@ return view.extend({
 		o.description = _('If empty, derive the room name from the router hostname after stripping the prefix below.');
 
 		o = s.option(form.Value, 'host_prefix', _('Hostname prefix to strip'));
-		o.placeholder = 'openwrt-';
 		o.depends({ room: '' });
 		o.description = _('Used only when Explicit room is empty. Example: hostname `openwrt-kitchen` with prefix `openwrt-` yields room `kitchen`.');
 
 		o = s.option(form.Flag, 'track_all_ifaces', _('Track all Wi-Fi interfaces'));
 		o.default = '0';
 		o.rmempty = false;
-		o.description = _('Track all hostapd interfaces. If enabled, the interface pattern below is ignored.');
+		o.description = _('Track all hostapd interfaces. If enabled, the interface pattern below is ignored. Changes take effect after Save & Apply.');
 
 		o = s.option(form.Value, 'iface_pattern', _('Interface pattern'));
-		o.placeholder = '*-main-*';
 		o.depends('track_all_ifaces', '0');
-		o.description = _('Shell wildcard used to select tracked Wi-Fi interfaces when Track all Wi-Fi interfaces is disabled.');
+		o.description = _('Shell wildcard used to select tracked Wi-Fi interfaces when Track all Wi-Fi interfaces is disabled. Example: `*-main-*`. Changes take effect after Save & Apply.');
+		o.validate = function(section_id, value) {
+			var trackAllOpt = this.map.lookupOption('track_all_ifaces', section_id)[0];
+			var trackAll = trackAllOpt ? trackAllOpt.formvalue(section_id) : '0';
+
+			if (trackAll === '1')
+				return true;
+
+			if (value != null && value.trim() !== '')
+				return true;
+
+			return _('Interface pattern must not be empty when Track all Wi-Fi interfaces is disabled.');
+		};
 
 		s = m.section(form.GridSection, 'device', _('Tracked devices'));
 		s.anonymous = false;

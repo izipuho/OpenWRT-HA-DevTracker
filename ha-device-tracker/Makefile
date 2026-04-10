@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ha-device-tracker
-PKG_VERSION:=0.2.8
+PKG_VERSION:=0.2.9
 PKG_RELEASE:=1
 
 PKG_LICENSE:=Proprietary
